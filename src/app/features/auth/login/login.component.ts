@@ -33,12 +33,8 @@ export class LoginComponent {
 
     try {
       const credentials = this.loginForm.getRawValue();
-      console.log('🔐 Intentando login con:', credentials);
       await this.authService.login(credentials);
     } catch (error: any) {
-      console.error('❌ Error completo:', error);
-      console.error('❌ Error.error:', error?.error);
-      
       // Manejar diferentes tipos de errores
       let message = 'Error al iniciar sesión. Intentá de nuevo.';
       

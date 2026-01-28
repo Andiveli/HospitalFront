@@ -47,16 +47,11 @@ export class AuthService {
     // Si hay token almacenado, cargar el perfil del usuario
     if (this.tokenSignal()) {
       try {
-        console.log('🔄 AuthService: Inicializando app, cargando perfil...');
         await this.loadUserProfile();
-        console.log('✅ AuthService: Perfil cargado exitosamente en inicialización');
-      } catch (error) {
-        console.error('❌ Error al cargar perfil en inicialización:', error);
+      } catch {
         // Si falla, limpiar la autenticación
         this.clearAuth();
       }
-    } else {
-      console.log('ℹ️ AuthService: No hay token, usuario no autenticado');
     }
   }
 
@@ -67,25 +62,17 @@ export class AuthService {
   async login(credentials: LoginDto): Promise<void> {
     this.loadingSignal.set(true);
     try {
-      console.log('🔄 AuthService: Enviando request a:', `${this.API_URL}/login`);
-      console.log('🔄 AuthService: Credenciales:', credentials);
-
       const response = await firstValueFrom(
         this.http.post<AuthResponseDto>(`${this.API_URL}/login`, credentials),
       );
 
-      console.log('✅ AuthService: Response recibida:', response);
-
       const token = response.data.token;
       this.setToken(token);
 
-      console.log('🔄 AuthService: Cargando perfil de usuario...');
       await this.loadUserProfile();
 
-      console.log('✅ AuthService: Login exitoso, redirigiendo a dashboard');
       await this.router.navigate(['/dashboard']);
     } catch (error) {
-      console.error('❌ AuthService: Error en login:', error);
       this.clearAuth();
       throw error;
     } finally {
@@ -96,8 +83,6 @@ export class AuthService {
   async signup(data: SignupDto): Promise<MensajeResponseDto> {
     this.loadingSignal.set(true);
     try {
-      console.log('🔄 AuthService: Registrando usuario en:', this.API_URL);
-      console.log('🔄 AuthService: Data:', data);
       return await firstValueFrom(this.http.post<MensajeResponseDto>(this.API_URL, data));
     } finally {
       this.loadingSignal.set(false);
@@ -152,17 +137,14 @@ export class AuthService {
 
   async loadUserProfile(): Promise<void> {
     if (!this.tokenSignal()) {
-      console.log('⚠️ AuthService: No token, no se puede cargar perfil');
       return;
     }
 
     try {
-      console.log('🔄 AuthService: Cargando perfil de usuario...');
       const backendResponse = await firstValueFrom(
         this.http.get<BackendPerfilResponseDto>(`${this.API_URL}/perfil`),
       );
-      console.log('✅ AuthService: Respuesta del backend:', backendResponse);
-      
+
       // Mapear la respuesta del backend al formato del frontend
       const profile: PerfilResponseDto = {
         id: backendResponse.data.userId,
@@ -178,12 +160,9 @@ export class AuthService {
         estilo: backendResponse.data.perfiles.paciente?.estilo,
         imagen: backendResponse.data.perfiles.paciente?.imagen,
       };
-      
-      console.log('✅ AuthService: Perfil normalizado:', profile);
+
       this.userSignal.set(profile);
-      console.log('✅ AuthService: userSignal actualizado. isAuthenticated:', this.isAuthenticated());
     } catch (error) {
-      console.error('❌ AuthService: Error cargando perfil:', error);
       // Si falla cargar el perfil, limpiar autenticación
       this.clearAuth();
       throw error;

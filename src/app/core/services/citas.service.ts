@@ -33,10 +33,8 @@ export class CitasService {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/proximas`)
       );
-      console.log('✅ CitasService: Próximas citas:', response.data?.length || 0);
       return response.data || [];
-    } catch (error) {
-      console.error('❌ CitasService: Error obteniendo próximas citas:', error);
+    } catch {
       return [];
     }
   }
@@ -52,10 +50,8 @@ export class CitasService {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/recientes`)
       );
-      console.log('✅ CitasService: Citas recientes:', response.data?.length || 0);
       return response.data || [];
-    } catch (error) {
-      console.error('❌ CitasService: Error obteniendo citas recientes:', error);
+    } catch {
       return [];
     }
   }
@@ -105,16 +101,10 @@ export class CitasService {
    * Backend returns: { message: string, data: CitaDetalladaResponseDto }
    */
   async getCitaDetalle(id: number): Promise<CitaDetalladaResponseDto> {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(`${this.baseUrl}/${id}`)
-      );
-      console.log('✅ CitasService: Detalle de cita:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ CitasService: Error obteniendo detalle de cita:', error);
-      throw error;
-    }
+    const response = await firstValueFrom(
+      this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(`${this.baseUrl}/${id}`)
+    );
+    return response.data;
   }
 
   // =====================================

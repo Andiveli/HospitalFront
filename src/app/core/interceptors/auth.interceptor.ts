@@ -8,7 +8,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Si no hay token, enviar la request sin modificar
   if (!token) {
-    console.log('🔓 AuthInterceptor: No token available for', req.url);
     return next(req);
   }
 
@@ -18,8 +17,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       Authorization: `Bearer ${token}`,
     },
   });
-
-  console.log('🔐 AuthInterceptor: Adding Bearer token to', req.url);
 
   return next(clonedRequest);
 };

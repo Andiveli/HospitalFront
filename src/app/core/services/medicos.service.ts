@@ -65,16 +65,11 @@ export class MedicosService {
    */
   async getDiasAtencion(medicoId: number): Promise<number[]> {
     try {
-      console.log('🔄 MedicosService: Solicitando días de atención para médico', medicoId);
-
       const response = await firstValueFrom(
         this.http.get<DiasAtencionApiResponseDto>(`${this.baseUrl}/${medicoId}/dias-atencion`),
       );
 
-      console.log('✅ MedicosService: Respuesta días de atención:', response);
-
       const diasStrings = response.data.diasAtencion;
-      console.log('📅 MedicosService: Días (strings):', diasStrings);
 
       // Map Spanish day names to numbers (0-6)
       // Handle multiple variations (with/without accents, case insensitive)
@@ -93,25 +88,12 @@ export class MedicosService {
       const dayNumbers = diasStrings
         .map((day) => {
           const normalized = day.toLowerCase().trim();
-          const number = dayMap[normalized];
-
-          if (number === undefined) {
-            console.warn(
-              `⚠️ MedicosService: Día no reconocido: "${day}" (normalizado: "${normalized}")`,
-            );
-          } else {
-            console.log(`✅ MedicosService: "${day}" → ${number}`);
-          }
-
-          return number;
+          return dayMap[normalized];
         })
         .filter((n): n is number => n !== undefined);
 
-      console.log('📅 MedicosService: Días (números 0-6):', dayNumbers);
-
       return dayNumbers;
-    } catch (error) {
-      console.error('❌ MedicosService: Error obteniendo días de atención:', error);
+    } catch {
       return [];
     }
   }
@@ -141,13 +123,6 @@ export class MedicosService {
     const params = new HttpParams().set('fecha', fecha);
 
     try {
-      console.log(
-        '🔄 MedicosService: Solicitando disponibilidad para médico',
-        medicoId,
-        'fecha',
-        fecha,
-      );
-
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: DisponibilidadResponseDto }>(
           `${this.baseUrl}/${medicoId}/disponibilidad`,
@@ -155,12 +130,9 @@ export class MedicosService {
         ),
       );
 
-      console.log('✅ MedicosService: Respuesta de disponibilidad:', response.data);
-
       // Unwrap { message, data } response and return the data object
       return response.data;
-    } catch (error) {
-      console.error('❌ MedicosService: Error obteniendo disponibilidad:', error);
+    } catch {
       // Return empty disponibilidad on error
       return {
         fecha,

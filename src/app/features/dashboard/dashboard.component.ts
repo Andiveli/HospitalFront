@@ -49,9 +49,7 @@ export class DashboardComponent {
       const citas = await this.citasService.getProximasCitas();
       // Get the first one (most recent)
       this.proximaCita.set(citas[0] || null);
-      console.log('✅ Dashboard: Próxima cita cargada:', citas[0]);
-    } catch (error) {
-      console.error('❌ Dashboard: Error loading próxima cita:', error);
+    } catch {
       this.proximaCita.set(null);
     } finally {
       this.loadingCita.set(false);

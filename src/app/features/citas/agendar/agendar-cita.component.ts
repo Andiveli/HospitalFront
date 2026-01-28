@@ -191,9 +191,7 @@ export default class AgendarCitaComponent {
     try {
       const medicos = await this.medicosService.getMedicos();
       this.allMedicos.set(medicos);
-      console.log('✅ Médicos cargados:', medicos.length);
     } catch (error: any) {
-      console.error('❌ Error loading doctors:', error);
       const errorMsg = error?.error?.message || error?.message || 'Error desconocido';
       this.error.set(`Error al cargar los médicos: ${errorMsg}`);
     } finally {
@@ -207,14 +205,10 @@ export default class AgendarCitaComponent {
     this.error.set(null); // Clear previous errors
     
     try {
-      console.log('🔄 AgendarCita: Cargando slots para médico', medicoId, 'fecha', fecha);
-      
       const disponibilidad = await this.medicosService.getDisponibilidad(
         medicoId,
         fecha
       );
-
-      console.log('✅ AgendarCita: Disponibilidad recibida:', disponibilidad);
 
       // Check if doctor works this day
       if (!disponibilidad.atiende) {
@@ -234,22 +228,15 @@ export default class AgendarCitaComponent {
         if (isToday) {
           const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
           
-          console.log(`⏰ Es HOY, hora actual: ${currentTime}`);
-          
           // Only show slots that start AFTER current time
           filteredSlots = disponibilidad.slots.filter(slot => {
-            const isAfter = slot.horaInicio > currentTime;
-            console.log(`  Slot ${slot.horaInicio} - ${isAfter ? '✅ futuro' : '❌ pasado'}`);
-            return isAfter;
+            return slot.horaInicio > currentTime;
           });
-          
-          console.log(`✅ Slots filtrados por hora: ${filteredSlots.length} de ${disponibilidad.slots.length}`);
         }
       }
 
       // Set available slots
       this.availableSlots.set(filteredSlots);
-      console.log('✅ AgendarCita: Slots disponibles:', filteredSlots.length);
       
       if (filteredSlots.length === 0) {
         if (disponibilidad.slots.length === 0) {
@@ -258,8 +245,7 @@ export default class AgendarCitaComponent {
           this.error.set('No hay horarios disponibles. Todos los turnos de hoy ya pasaron.');
         }
       }
-    } catch (error) {
-      console.error('❌ AgendarCita: Error loading slots:', error);
+    } catch {
       this.error.set('Error al cargar los horarios. Intenta de nuevo.');
       this.availableSlots.set([]);
     } finally {
@@ -296,21 +282,16 @@ export default class AgendarCitaComponent {
   // Load doctor's working days and generate next 14 days (filtered)
   async loadDiasAtencionAndGenerateDays(medicoId: number): Promise<void> {
     try {
-      console.log('🔄 AgendarCita: Cargando días de atención del médico', medicoId);
-      
       const workingDayNumbers = await this.medicosService.getDiasAtencion(medicoId);
-      console.log('✅ AgendarCita: Días laborables (números):', workingDayNumbers);
 
       // Defensive check
       if (!Array.isArray(workingDayNumbers)) {
-        console.error('❌ workingDayNumbers NO es un array:', workingDayNumbers);
         // Fallback: generate all 7 days
         this.generateAvailableDays(new Set([0, 1, 2, 3, 4, 5, 6]));
         return;
       }
 
       if (workingDayNumbers.length === 0) {
-        console.warn('⚠️ workingDayNumbers está vacío, médico no tiene días configurados');
         // Fallback: generate all 7 days
         this.generateAvailableDays(new Set([0, 1, 2, 3, 4, 5, 6]));
         return;
@@ -318,11 +299,9 @@ export default class AgendarCitaComponent {
 
       // Create Set of working days
       const workingDays = new Set(workingDayNumbers);
-      console.log('✅ AgendarCita: Días laborables (Set):', Array.from(workingDays));
 
       this.generateAvailableDays(workingDays);
-    } catch (error) {
-      console.error('❌ Error loading working days:', error);
+    } catch {
       // Fallback: generate all 7 days
       this.generateAvailableDays(new Set([0, 1, 2, 3, 4, 5, 6]));
     }
@@ -336,9 +315,6 @@ export default class AgendarCitaComponent {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    console.log('📅 AgendarCita: Hoy es:', today.toLocaleDateString('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-    console.log('📅 AgendarCita: Días laborables:', Array.from(workingDays).map(d => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d]).join(', '));
-    
     let daysAdded = 0;
     let offset = 0;
 
@@ -350,8 +326,6 @@ export default class AgendarCitaComponent {
 
       // Check if this day is a working day
       const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      
-      console.log(`📅 Día ${offset}: ${date.toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric' })} (dayOfWeek=${dayOfWeek}) - ${workingDays.has(dayOfWeek) ? '✅ TRABAJA' : '❌ NO trabaja'}`);
       
       if (workingDays.has(dayOfWeek)) {
         let label = '';
@@ -366,13 +340,11 @@ export default class AgendarCitaComponent {
 
         days.push({ date, label });
         daysAdded++;
-        console.log(`  ✅ Agregado: ${label}`);
       }
 
       offset++;
     }
 
-    console.log('✅ AgendarCita: Días disponibles generados:', days.length);
     this.availableDays.set(days);
   }
 
@@ -418,7 +390,6 @@ export default class AgendarCitaComponent {
       // Success! Redirect to appointments list
       await this.router.navigate(['/citas']);
     } catch (error: any) {
-      console.error('Error creating appointment:', error);
       this.error.set(
         error?.error?.message || 'Error al agendar la cita. Intenta de nuevo.'
       );
