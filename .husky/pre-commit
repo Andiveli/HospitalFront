@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+# Run GGA (Gentleman Guardian Angel) for code review
+echo "🤖 Running GGA code review..."
+gga run || {
+  echo "❌ GGA review failed. Commit aborted."
+  exit 1
+}
+
+echo "✅ GGA review passed!"

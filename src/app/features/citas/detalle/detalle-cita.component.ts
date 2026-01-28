@@ -1,4 +1,4 @@
-import { Component, signal, inject, input, viewChild, effect } from '@angular/core';
+import { Component, signal, inject, input, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CitasService } from '../../../core/services/citas.service';
@@ -13,6 +13,7 @@ import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/e
   imports: [CommonModule, EditCitaModalComponent],
   templateUrl: './detalle-cita.component.html',
   styleUrl: './detalle-cita.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class DetalleCitaComponent {
   private readonly citasService = inject(CitasService);
@@ -30,6 +31,10 @@ export default class DetalleCitaComponent {
   cita = signal<CitaDetalladaResponseDto | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
+  
+  // UI State
+  showCancelConfirm = signal(false);
+  successMessage = signal<string | null>(null);
 
   // =====================================
   // LIFECYCLE
@@ -38,12 +43,8 @@ export default class DetalleCitaComponent {
     // Load cita when id changes (using effect to wait for input to be available)
     effect(() => {
       const citaId = this.id();
-      console.log('🔍 DetalleCita effect - citaId:', citaId);
       if (citaId) {
-        console.log('✅ DetalleCita - calling loadCitaDetalle()');
         this.loadCitaDetalle();
-      } else {
-        console.log('⏳ DetalleCita - waiting for citaId...');
       }
     });
   }
@@ -52,35 +53,28 @@ export default class DetalleCitaComponent {
   // METHODS - Load Data
   // =====================================
   async loadCitaDetalle(): Promise<void> {
-    console.log('📥 loadCitaDetalle - START');
     this.loading.set(true);
     this.error.set(null);
     try {
       const citaIdStr = this.id();
-      console.log('📥 loadCitaDetalle - citaIdStr:', citaIdStr);
-      
       if (!citaIdStr) {
         throw new Error('ID de cita no disponible');
       }
 
       const citaId = parseInt(citaIdStr, 10);
-      console.log('📥 loadCitaDetalle - citaId parsed:', citaId);
-      
       if (isNaN(citaId)) {
         throw new Error('ID de cita inválido');
       }
 
       const cita = await this.citasService.getCitaDetalle(citaId);
-      console.log('✅ loadCitaDetalle - cita loaded:', cita);
       this.cita.set(cita);
     } catch (error: any) {
-      console.error('❌ Error loading appointment details:', error);
+      console.error('Error loading appointment details:', error);
       this.error.set(
         error?.error?.message || 'Error al cargar los detalles de la cita.'
       );
     } finally {
       this.loading.set(false);
-      console.log('📥 loadCitaDetalle - END, loading:', this.loading(), 'cita:', this.cita());
     }
   }
 
@@ -164,24 +158,39 @@ export default class DetalleCitaComponent {
 
   onModalSave(): void {
     // Reload cita details after successful edit
+    this.successMessage.set('Cita actualizada exitosamente');
     this.loadCitaDetalle();
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => this.successMessage.set(null), 3000);
   }
 
-  async eliminarCita(): Promise<void> {
-    if (!confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
-      return;
-    }
+  // Show cancel confirmation dialog
+  showCancelDialog(): void {
+    this.showCancelConfirm.set(true);
+  }
 
+  // Hide cancel confirmation dialog
+  hideCancelDialog(): void {
+    this.showCancelConfirm.set(false);
+  }
+
+  // Confirm cancellation
+  async confirmCancelCita(): Promise<void> {
+    this.loading.set(true);
     try {
       const citaId = this.cita()?.id;
       if (!citaId) return;
 
       await this.citasService.cancelCita(citaId);
-      alert('Cita cancelada exitosamente');
+      this.showCancelConfirm.set(false);
       this.router.navigate(['/citas']);
     } catch (error: any) {
       console.error('Error canceling appointment:', error);
-      alert(error?.error?.message || 'Error al cancelar la cita');
+      this.error.set(error?.error?.message || 'Error al cancelar la cita');
+      this.showCancelConfirm.set(false);
+    } finally {
+      this.loading.set(false);
     }
   }
 }
