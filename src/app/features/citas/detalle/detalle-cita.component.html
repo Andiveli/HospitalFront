@@ -1,0 +1,214 @@
+<div class="min-h-screen bg-slate-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <button
+      (click)="goBack()"
+      class="mb-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      <span>Volver a Mis Citas</span>
+    </button>
+
+    <h1 class="text-3xl font-bold text-slate-900">Detalle de Cita</h1>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="text-center py-12">
+      <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-4 text-slate-600">Cargando detalles...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="max-w-2xl mx-auto">
+      <div class="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <h3 class="font-semibold mb-2">Error</h3>
+        <p>{{ error() }}</p>
+        <button
+          (click)="goBack()"
+          class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Volver
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (cita() && !loading() && !error()) {
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Card 1: Fecha, Hora y Médico -->
+      <div class="bg-white border border-slate-200 rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Información de la Cita</h2>
+        <div class="space-y-3">
+          <!-- Fecha y Hora -->
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-blue-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <div>
+              <p class="text-sm text-slate-600">Fecha y Hora</p>
+              <p class="font-semibold text-slate-900">{{ formatDateTime(cita()!.fechaHoraInicio) }}</p>
+            </div>
+          </div>
+
+          <!-- Médico -->
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-blue-600 mt-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-sm text-slate-600">Médico</p>
+              <p class="font-semibold text-slate-900">{{ getMedicoNombre() }}</p>
+              <p class="text-sm text-slate-600">{{ getEspecialidad() }}</p>
+            </div>
+          </div>
+
+          <!-- Modalidad -->
+          <div class="flex items-start gap-3">
+            @if (cita()!.telefonica) {
+              <svg class="w-6 h-6 text-green-600 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              </svg>
+            } @else {
+              <svg class="w-6 h-6 text-blue-600 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              </svg>
+            }
+            <div>
+              <p class="text-sm text-slate-600">Modalidad</p>
+              <p class="font-semibold text-slate-900">
+                @if (cita()!.telefonica) {
+                  Videoconsulta
+                } @else {
+                  Presencial
+                }
+              </p>
+            </div>
+          </div>
+
+          <!-- Estado -->
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-blue-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-sm text-slate-600">Estado</p>
+              @if (isAtendida()) {
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+                  Atendida
+                </span>
+              } @else if (isPendiente()) {
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
+                  Pendiente
+                </span>
+              } @else {
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+                  Cancelada
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acciones (solo para pendientes) -->
+        @if (isPendiente() && canModify()) {
+          <div class="mt-6 flex gap-3">
+            <button
+              (click)="editarCita()"
+              class="flex-1 px-4 py-2 bg-white border-2 border-slate-900 rounded-lg font-medium text-slate-900 hover:bg-slate-900 hover:text-white transition"
+            >
+              Editar Cita
+            </button>
+            <button
+              (click)="eliminarCita()"
+              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+            >
+              Cancelar Cita
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Card 2: Diagnóstico -->
+      @if (isAtendida()) {
+        <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Diagnóstico
+          </h2>
+
+          @if (hasDiagnostico()) {
+            <div class="space-y-4">
+              <div>
+                <p class="text-slate-900">{{ cita()!.diagnostico }}</p>
+              </div>
+
+              @if (cita()!.observaciones) {
+                <div>
+                  <p class="text-sm text-slate-600 mb-1">Observaciones</p>
+                  <p class="text-slate-700">{{ cita()!.observaciones }}</p>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-slate-500 italic">No se ha registrado un diagnóstico para esta cita.</p>
+          }
+        </div>
+
+        <!-- Card 3: Receta -->
+        <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+            Receta Médica
+          </h2>
+
+          @if (hasRecetas()) {
+            <p class="text-slate-700">
+              El médico ha recetado medicamentos para esta consulta. 
+              <a href="/recetas" class="text-blue-600 hover:underline">Ver recetas completas</a>
+            </p>
+          } @else {
+            <p class="text-slate-500 italic">No se registraron recetas para esta cita.</p>
+          }
+        </div>
+
+        <!-- Card 4: Derivaciones -->
+        <div class="bg-white border border-slate-200 rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Derivaciones
+          </h2>
+
+          @if (hasDerivaciones()) {
+            <p class="text-slate-700">
+              Se han registrado derivaciones para esta consulta.
+              <a href="/derivaciones" class="text-blue-600 hover:underline">Ver derivaciones completas</a>
+            </p>
+          } @else {
+            <p class="text-slate-500 italic">No se registraron derivaciones para esta cita.</p>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Edit Modal -->
+@if (cita()) {
+  <app-edit-cita-modal
+    #editModal
+    [cita]="cita()!"
+    (onSave)="onModalSave()"
+  />
+}

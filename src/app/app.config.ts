@@ -1,0 +1,34 @@
+import { ApplicationConfig, provideZonelessChangeDetection, APP_INITIALIZER, inject, LOCALE_ID } from '@angular/core';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es-EC';
+
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { AuthService } from './core/services/auth.service';
+
+// Register Spanish (Ecuador) locale
+registerLocaleData(localeEs);
+
+// Initialize app: load user profile if token exists
+function initializeApp() {
+  const authService = inject(AuthService);
+  return () => authService.initialize();
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes, withComponentInputBinding()),
+    provideZonelessChangeDetection(),
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
+    { provide: LOCALE_ID, useValue: 'es-EC' },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      multi: true
+    }
+  ]
+};
