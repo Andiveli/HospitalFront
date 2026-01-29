@@ -18,29 +18,51 @@
   <div class="mb-8 flex items-center justify-center gap-4">
     <div class="flex items-center gap-2">
       <div
-        [class]="currentStep() >= 1 ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold' : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'"
+        [class]="
+          currentStep() >= 1
+            ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold'
+            : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'
+        "
       >
         1
       </div>
       <span class="text-sm font-medium" [class.text-blue-600]="currentStep() >= 1">Médico</span>
     </div>
 
-    <div class="w-12 h-1" [class.bg-blue-600]="currentStep() >= 2" [class.bg-slate-300]="currentStep() < 2"></div>
+    <div
+      class="w-12 h-1"
+      [class.bg-blue-600]="currentStep() >= 2"
+      [class.bg-slate-300]="currentStep() < 2"
+    ></div>
 
     <div class="flex items-center gap-2">
       <div
-        [class]="currentStep() >= 2 ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold' : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'"
+        [class]="
+          currentStep() >= 2
+            ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold'
+            : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'
+        "
       >
         2
       </div>
-      <span class="text-sm font-medium" [class.text-blue-600]="currentStep() >= 2">Fecha y Hora</span>
+      <span class="text-sm font-medium" [class.text-blue-600]="currentStep() >= 2"
+        >Fecha y Hora</span
+      >
     </div>
 
-    <div class="w-12 h-1" [class.bg-blue-600]="currentStep() >= 3" [class.bg-slate-300]="currentStep() < 3"></div>
+    <div
+      class="w-12 h-1"
+      [class.bg-blue-600]="currentStep() >= 3"
+      [class.bg-slate-300]="currentStep() < 3"
+    ></div>
 
     <div class="flex items-center gap-2">
       <div
-        [class]="currentStep() >= 3 ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold' : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'"
+        [class]="
+          currentStep() >= 3
+            ? 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold'
+            : 'w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center'
+        "
       >
         3
       </div>
@@ -70,14 +92,22 @@
         <div class="flex gap-2 flex-wrap">
           <button
             (click)="clearFilter()"
-            [class]="selectedEspecialidadId() === null ? 'px-4 py-2 rounded-lg bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200'"
+            [class]="
+              selectedEspecialidadId() === null
+                ? 'px-4 py-2 rounded-lg bg-blue-600 text-white font-medium'
+                : 'px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200'
+            "
           >
             Todas
           </button>
           @for (esp of especialidades(); track esp.id) {
             <button
               (click)="filterByEspecialidad(esp.id)"
-              [class]="selectedEspecialidadId() === esp.id ? 'px-4 py-2 rounded-lg bg-blue-600 text-white font-medium' : 'px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200'"
+              [class]="
+                selectedEspecialidadId() === esp.id
+                  ? 'px-4 py-2 rounded-lg bg-blue-600 text-white font-medium'
+                  : 'px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200'
+              "
             >
               {{ esp.nombre }}
             </button>
@@ -87,7 +117,9 @@
 
       @if (loadingMedicos()) {
         <div class="text-center py-12">
-          <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div
+            class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
+          ></div>
           <p class="mt-4 text-slate-600">Cargando médicos...</p>
         </div>
       } @else {
@@ -101,7 +133,11 @@
                 <!-- Doctor Avatar Placeholder -->
                 <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
                   <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                 </div>
 
@@ -109,23 +145,47 @@
                   <h3 class="font-semibold text-slate-900">
                     Dr. {{ medico.nombre }} {{ medico.apellido }}
                   </h3>
-                  <p class="text-sm text-slate-600">{{ medico.especialidades[0]?.nombre || 'General' }}</p>
+                  <p class="text-sm text-slate-600">
+                    {{ medico.especialidades[0]?.nombre || 'General' }}
+                  </p>
                 </div>
               </div>
 
-              <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <svg
+                class="w-6 h-6 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           }
 
           @if (medicos().length === 0 && !loadingMedicos()) {
             <div class="text-center py-12 bg-white border border-slate-200 rounded-lg">
-              <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              <svg
+                class="w-16 h-16 mx-auto mb-4 text-slate-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
               @if (selectedEspecialidadId()) {
-                <p class="text-slate-600 mb-2">No hay médicos disponibles para esta especialidad.</p>
+                <p class="text-slate-600 mb-2">
+                  No hay médicos disponibles para esta especialidad.
+                </p>
                 <button
                   (click)="clearFilter()"
                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -161,7 +221,11 @@
           @for (day of availableDays(); track day.date) {
             <button
               (click)="selectDate(day.date)"
-              [class]="selectedDate() === day.date ? 'p-3 rounded-lg border-2 border-blue-600 bg-blue-50 font-semibold text-blue-900' : 'p-3 rounded-lg border border-slate-300 bg-white hover:border-blue-500 text-slate-700'"
+              [class]="
+                selectedDate() === day.date
+                  ? 'p-3 rounded-lg border-2 border-blue-600 bg-blue-50 font-semibold text-blue-900'
+                  : 'p-3 rounded-lg border border-slate-300 bg-white hover:border-blue-500 text-slate-700'
+              "
             >
               {{ day.label }}
             </button>
@@ -176,7 +240,9 @@
 
           @if (loadingSlots()) {
             <div class="text-center py-8">
-              <div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div
+                class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
+              ></div>
               <p class="mt-2 text-slate-600">Cargando horarios...</p>
             </div>
           } @else {
@@ -185,14 +251,20 @@
                 @for (slot of availableSlots(); track slot.horaInicio) {
                   <button
                     (click)="selectSlot(slot)"
-                    [class]="selectedSlot() === slot ? 'p-3 rounded-lg border-2 border-blue-600 bg-blue-50 font-semibold text-blue-900' : 'p-3 rounded-lg border border-slate-300 bg-white hover:border-blue-500 text-slate-700'"
+                    [class]="
+                      selectedSlot() === slot
+                        ? 'p-3 rounded-lg border-2 border-blue-600 bg-blue-50 font-semibold text-blue-900'
+                        : 'p-3 rounded-lg border border-slate-300 bg-white hover:border-blue-500 text-slate-700'
+                    "
                   >
                     {{ slot.horaInicio }}
                   </button>
                 }
               </div>
             } @else {
-              <p class="text-center text-slate-600 py-8">No hay horarios disponibles para este día.</p>
+              <p class="text-center text-slate-600 py-8">
+                No hay horarios disponibles para este día.
+              </p>
             }
           }
         </div>
@@ -204,25 +276,55 @@
         <div class="flex gap-4">
           <button
             (click)="isTelefonica.set(true)"
-            [class]="isTelefonica() ? 'flex-1 p-4 rounded-lg border-2 border-blue-600 bg-blue-50' : 'flex-1 p-4 rounded-lg border border-slate-300 bg-white hover:border-blue-500'"
+            [class]="
+              isTelefonica()
+                ? 'flex-1 p-4 rounded-lg border-2 border-blue-600 bg-blue-50'
+                : 'flex-1 p-4 rounded-lg border border-slate-300 bg-white hover:border-blue-500'
+            "
           >
             <div class="text-center">
-              <svg class="w-8 h-8 mx-auto mb-2" [class.text-blue-600]="isTelefonica()" [class.text-slate-600]="!isTelefonica()" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              <svg
+                class="w-8 h-8 mx-auto mb-2"
+                [class.text-blue-600]="isTelefonica()"
+                [class.text-slate-600]="!isTelefonica()"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"
+                />
               </svg>
-              <p class="font-semibold" [class.text-blue-900]="isTelefonica()" [class.text-slate-700]="!isTelefonica()">Videoconsulta</p>
+              <p
+                class="font-semibold"
+                [class.text-blue-900]="isTelefonica()"
+                [class.text-slate-700]="!isTelefonica()"
+              >
+                Videoconsulta
+              </p>
             </div>
           </button>
 
           <button
-            (click)="isTelefonica.set(false)"
-            [class]="!isTelefonica() ? 'flex-1 p-4 rounded-lg border-2 border-blue-600 bg-blue-50' : 'flex-1 p-4 rounded-lg border border-slate-300 bg-white hover:border-blue-500'"
+            disabled
+            class="flex-1 p-4 rounded-lg border border-slate-200 bg-slate-50 cursor-not-allowed opacity-50"
+            title="Las citas presenciales no están disponibles temporalmente"
           >
             <div class="text-center">
-              <svg class="w-8 h-8 mx-auto mb-2" [class.text-blue-600]="!isTelefonica()" [class.text-slate-600]="isTelefonica()" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              <svg
+                class="w-8 h-8 mx-auto mb-2 text-slate-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clip-rule="evenodd"
+                />
               </svg>
-              <p class="font-semibold" [class.text-blue-900]="!isTelefonica()" [class.text-slate-700]="isTelefonica()">Presencial</p>
+              <p class="font-semibold text-slate-500">
+                Presencial
+                <span class="block text-xs mt-1">(No disponible)</span>
+              </p>
             </div>
           </button>
         </div>
@@ -273,12 +375,18 @@
             <div class="flex items-center gap-2">
               @if (isTelefonica()) {
                 <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                  <path
+                    d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"
+                  />
                 </svg>
                 <span class="font-semibold text-slate-900">Videoconsulta</span>
               } @else {
                 <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
                 <span class="font-semibold text-slate-900">Presencial</span>
               }
@@ -302,11 +410,18 @@
           class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           @if (submitting()) {
-            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div
+              class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"
+            ></div>
             <span>Agendando...</span>
           } @else {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             <span>Agendar Cita</span>
           }

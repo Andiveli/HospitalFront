@@ -47,7 +47,7 @@ export class RegisterComponent {
     // Validar que las contraseñas coincidan
     const password = this.registerForm.value.password;
     const confirmarPassword = this.registerForm.value.confirmarPassword;
-    
+
     if (password !== confirmarPassword) {
       this.errorMessage.set('Las contraseñas no coinciden');
       return;
@@ -67,7 +67,7 @@ export class RegisterComponent {
         confirmarPassword: formData.confirmarPassword,
         genero: formData.genero,
       };
-      
+
       // Solo añadir campos opcionales si tienen valor
       if (formData.segundoNombre) {
         signupData.segundoNombre = formData.segundoNombre;
@@ -75,9 +75,9 @@ export class RegisterComponent {
       if (formData.segundoApellido) {
         signupData.segundoApellido = formData.segundoApellido;
       }
-      
+
       const response = await this.authService.signup(signupData);
-      
+
       this.successMessage.set(response.message);
 
       // Redirigir al login después de 2 segundos

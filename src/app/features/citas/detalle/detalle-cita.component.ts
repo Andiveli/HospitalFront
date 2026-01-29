@@ -1,12 +1,24 @@
-import { Component, signal, inject, input, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  input,
+  viewChild,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CitasService } from '../../../core/services/citas.service';
-import {
-  CitaDetalladaResponseDto,
-  formatMedicoNombreSimplificado,
-} from '../../../core/models';
+import { CitaDetalladaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
 import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/edit-cita-modal.component';
+import {
+  isAppointmentTimeReady,
+  hasAppointmentExpired,
+  getTimeUntilReady,
+} from '../../../core/utils/appointment-time.utils';
+import { VideoCallService } from '../../../core/services/video-call.service';
+import { GenerarInvitacionDto } from '../../../core/models/video-call.models';
 
 @Component({
   selector: 'app-detalle-cita',
@@ -18,6 +30,7 @@ import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/e
 export default class DetalleCitaComponent {
   private readonly citasService = inject(CitasService);
   private readonly router = inject(Router);
+  private readonly videoCallService = inject(VideoCallService);
 
   // Route param (id) - optional because it's loaded async
   id = input<string>();
@@ -31,7 +44,7 @@ export default class DetalleCitaComponent {
   cita = signal<CitaDetalladaResponseDto | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
-  
+
   // UI State
   showCancelConfirm = signal(false);
   successMessage = signal<string | null>(null);
@@ -70,9 +83,7 @@ export default class DetalleCitaComponent {
       this.cita.set(cita);
     } catch (error: any) {
       console.error('Error loading appointment details:', error);
-      this.error.set(
-        error?.error?.message || 'Error al cargar los detalles de la cita.'
-      );
+      this.error.set(error?.error?.message || 'Error al cargar los detalles de la cita.');
     } finally {
       this.loading.set(false);
     }
@@ -147,6 +158,74 @@ export default class DetalleCitaComponent {
   }
 
   // =====================================
+  // METHODS - Video Call Room
+  // =====================================
+  isIngresarSalaReady(): boolean {
+    const citaData = this.cita();
+    if (!citaData || !this.isPendiente() || !citaData.telefonica) return false;
+
+    return isAppointmentTimeReady(citaData.fechaHoraInicio);
+  }
+
+  hasSalaExpired(): boolean {
+    const citaData = this.cita();
+    if (!citaData || !citaData.telefonica) return false;
+
+    // Verificar si la cita ya expiró
+    return hasAppointmentExpired(citaData.fechaHoraInicio, citaData.fechaHoraFin);
+  }
+
+  getTimeUntilSalaReady(): string {
+    const citaData = this.cita();
+    if (!citaData || !citaData.telefonica) return '';
+
+    return getTimeUntilReady(citaData.fechaHoraInicio);
+  }
+
+  ingresarASala(): void {
+    const citaData = this.cita();
+    if (!citaData) return;
+
+    // TODO: Navigate to video call room when backend is ready
+    // Por ahora mostramos un mensaje temporal
+    console.log(`Ingresando a sala de videollamada para cita ${citaData.id}`);
+
+    // Navegación futura (cuando el backend esté listo):
+    // this.router.navigate(['/citas', citaData.id, 'sala-espera']);
+
+    // Mensaje temporal hasta que implementemos la videollamada
+    alert('Sala de videollamada en desarrollo. Esta función estará disponible pronto.');
+  }
+
+  async generarLinkInvitado(): Promise<void> {
+    const citaData = this.cita();
+    if (!citaData) return;
+
+    try {
+      const guestData: GenerarInvitacionDto = {
+        nombreInvitado: 'Invitado',
+        rolInvitado: 'invitado',
+      };
+
+      const response = await this.videoCallService.createInvitation(citaData.id, guestData);
+
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(response.accessUrl);
+
+      // Mostrar mensaje de éxito
+      this.successMessage.set(`Link de invitado generado: ${response.accessUrl}`);
+
+      // Limpiar mensaje de éxito después de 5 segundos
+      setTimeout(() => {
+        this.successMessage.set(null);
+      }, 5000);
+    } catch (error: any) {
+      console.error('Error generating guest link:', error);
+      this.error.set(error?.message || 'Error al generar link de invitado');
+    }
+  }
+
+  // =====================================
   // METHODS - Edit/Delete
   // =====================================
   editarCita(): void {
@@ -160,7 +239,7 @@ export default class DetalleCitaComponent {
     // Reload cita details after successful edit
     this.successMessage.set('Cita actualizada exitosamente');
     this.loadCitaDetalle();
-    
+
     // Clear success message after 3 seconds
     setTimeout(() => this.successMessage.set(null), 3000);
   }

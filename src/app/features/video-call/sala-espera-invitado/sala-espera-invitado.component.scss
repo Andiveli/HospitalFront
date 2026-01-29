@@ -1,0 +1,62 @@
+.sala-espera-invitado {
+  aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 768px) {
+  .sala-espera-invitado {
+    .grid-cols-1.lg\:grid-cols-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* Animaciones para los botones */
+.sala-espera-invitado {
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  button {
+    transition: all 0.2s ease;
+  }
+  
+  button:hover:not(:disabled) {
+    transform: scale(1.05);
+  }
+  
+  button:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+/* Efectos de video */
+.sala-espera-invitado {
+  video {
+    transform: scaleX(-1); /* Espejo para video local */
+    border-radius: 0.75rem;
+  }
+}
+
+/* Estados de conexión */
+.sala-espera-invitado {
+  .connection-indicator {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .guest-badge {
+    animation: shimmer 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+  }
+}

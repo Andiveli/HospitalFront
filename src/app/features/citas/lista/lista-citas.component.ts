@@ -1,8 +1,13 @@
-import { Component, signal, inject, effect } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CitasService } from '../../../core/services/citas.service';
 import { CitaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
+import {
+  isAppointmentTimeReady,
+  hasAppointmentExpired,
+  getTimeUntilReady,
+} from '../../../core/utils/appointment-time.utils';
 
 @Component({
   selector: 'app-lista-citas',
@@ -21,10 +26,33 @@ export default class ListaCitasComponent {
   loadingProximas = signal(false);
 
   // =====================================
+  // STATE - All Pending Citas (Paginated)
+  // =====================================
+  todasPendientes = signal<CitaResponseDto[]>([]);
+  loadingTodasPendientes = signal(false);
+  showAllPendientes = signal(false);
+  currentPagePendientes = signal(1);
+  totalPagesPendientes = signal(1);
+  totalPendientes = signal(0);
+  vistaGridPendientes = signal(true); // true = grid, false = list
+
+  // =====================================
   // STATE - Historial (Last 4)
   // =====================================
   historialCitas = signal<CitaResponseDto[]>([]);
   loadingHistorial = signal(false);
+
+  // =====================================
+  // STATE - All Atendidas (Paginated)
+  // =====================================
+  todasAtendidas = signal<CitaResponseDto[]>([]);
+  loadingTodasAtendidas = signal(false);
+  showAllAtendidas = signal(false);
+  currentPageAtendidas = signal(1);
+  totalPagesAtendidas = signal(1);
+  totalAtendidas = signal(0);
+
+  private readonly PAGE_LIMIT = 10;
 
   // =====================================
   // LIFECYCLE
@@ -61,6 +89,42 @@ export default class ListaCitasComponent {
     }
   }
 
+  async loadTodasPendientes(page: number = 1): Promise<void> {
+    this.loadingTodasPendientes.set(true);
+    try {
+      const response = await this.citasService.getPendientesCitas({
+        page,
+        limit: this.PAGE_LIMIT,
+      });
+      this.todasPendientes.set(response.data);
+      this.currentPagePendientes.set(response.meta.page);
+      this.totalPagesPendientes.set(response.meta.totalPages);
+      this.totalPendientes.set(response.meta.total);
+    } catch (error) {
+      console.error('Error loading all pending appointments:', error);
+    } finally {
+      this.loadingTodasPendientes.set(false);
+    }
+  }
+
+  async loadTodasAtendidas(page: number = 1): Promise<void> {
+    this.loadingTodasAtendidas.set(true);
+    try {
+      const response = await this.citasService.getAtendidasCitas({
+        page,
+        limit: this.PAGE_LIMIT,
+      });
+      this.todasAtendidas.set(response.data);
+      this.currentPageAtendidas.set(response.meta.page);
+      this.totalPagesAtendidas.set(response.meta.totalPages);
+      this.totalAtendidas.set(response.meta.total);
+    } catch (error) {
+      console.error('Error loading all attended appointments:', error);
+    } finally {
+      this.loadingTodasAtendidas.set(false);
+    }
+  }
+
   // =====================================
   // METHODS - Navigation
   // =====================================
@@ -72,12 +136,40 @@ export default class ListaCitasComponent {
     this.router.navigate(['/citas', citaId]);
   }
 
-  verTodasPendientes(): void {
-    this.router.navigate(['/citas/pendientes']);
+  // =====================================
+  // METHODS - Toggle Views
+  // =====================================
+  toggleVerTodasPendientes(): void {
+    if (this.showAllPendientes()) {
+      this.showAllPendientes.set(false);
+    } else {
+      this.showAllPendientes.set(true);
+      this.loadTodasPendientes(1);
+    }
   }
 
-  verTodasAtendidas(): void {
-    this.router.navigate(['/citas/atendidas']);
+  toggleVerTodasAtendidas(): void {
+    if (this.showAllAtendidas()) {
+      this.showAllAtendidas.set(false);
+    } else {
+      this.showAllAtendidas.set(true);
+      this.loadTodasAtendidas(1);
+    }
+  }
+
+  // =====================================
+  // METHODS - Pagination
+  // =====================================
+  goToPagePendientes(page: number): void {
+    if (page >= 1 && page <= this.totalPagesPendientes()) {
+      this.loadTodasPendientes(page);
+    }
+  }
+
+  goToPageAtendidas(page: number): void {
+    if (page >= 1 && page <= this.totalPagesAtendidas()) {
+      this.loadTodasAtendidas(page);
+    }
   }
 
   // =====================================
@@ -91,10 +183,69 @@ export default class ListaCitasComponent {
     return cita.medico.especialidad || 'General';
   }
 
+  // Helper para paginación
+  getStartIndex(currentPage: number): number {
+    return (currentPage - 1) * this.PAGE_LIMIT + 1;
+  }
+
+  getEndIndex(currentPage: number, total: number): number {
+    return Math.min(currentPage * this.PAGE_LIMIT, total);
+  }
+
+  // Generar array de números para paginación (solo páginas visibles)
+  getVisiblePages(currentPage: number, totalPages: number): number[] {
+    const delta = 2; // Show 2 pages on each side of current page
+    const range: number[] = [];
+    const rangeWithDots: number[] = [];
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1);
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    range.forEach((i) => rangeWithDots.push(i));
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push(totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    // Remove duplicates and sort
+    return [...new Set(rangeWithDots)].sort((a, b) => a - b);
+  }
+
+  // Legacy method for backwards compatibility
+  getPageNumbers(totalPages: number): number[] {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
   formatDateShort(isoDate: string): { day: string; month: string } {
     const date = new Date(isoDate);
     const day = date.getDate().toString();
-    const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const months = [
+      'ENE',
+      'FEB',
+      'MAR',
+      'ABR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AGO',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DIC',
+    ];
     const month = months[date.getMonth()];
     return { day, month };
   }
@@ -127,5 +278,56 @@ export default class ListaCitasComponent {
 
   canModify(cita: CitaResponseDto): boolean {
     return this.citasService.canModifyCita(cita.fechaHoraInicio);
+  }
+
+  // =====================================
+  // METHODS - Video Call Room
+  // =====================================
+  isIngresarSalaReady(cita: CitaResponseDto): boolean {
+    // Solo para citas telefónicas (videollamadas)
+    if (!cita.telefonica) return false;
+
+    // Verificar si está en el horario (5 minutos antes)
+    return isAppointmentTimeReady(cita.fechaHoraInicio);
+  }
+
+  hasSalaExpired(cita: CitaResponseDto): boolean {
+    // Solo para citas telefónicas (videollamadas)
+    if (!cita.telefonica) return false;
+
+    // Verificar si la cita ya expiró
+    return hasAppointmentExpired(cita.fechaHoraInicio, cita.fechaHoraFin);
+  }
+
+  getTimeUntilSalaReady(cita: CitaResponseDto): string {
+    // Solo para citas telefónicas (videollamadas)
+    if (!cita.telefonica) return '';
+
+    return getTimeUntilReady(cita.fechaHoraInicio);
+  }
+
+  ingresarASala(citaId: number): void {
+    // TODO: Navigate to video call room when backend is ready
+    // Por ahora mostramos un mensaje temporal
+    console.log(`Ingresando a sala de videollamada para cita ${citaId}`);
+
+    // Navegación futura (cuando el backend esté listo):
+    // this.router.navigate(['/citas', citaId, 'sala-espera']);
+
+    // Mensaje temporal hasta que implementemos la videollamada
+    alert('Sala de videollamada en desarrollo. Esta función estará disponible pronto.');
+  }
+
+  generarLinkInvitado(citaId: number): void {
+    // TODO: Generate guest link when backend is ready
+    console.log(`Generando link de invitado para cita ${citaId}`);
+
+    // Implementación futura:
+    // const guestLink = await this.citasService.generarLinkInvitado(citaId);
+    // navigator.clipboard.writeText(guestLink);
+    // alert('Link de invitado copiado al portapapeles');
+
+    // Mensaje temporal
+    alert('Generación de links de invitado en desarrollo. Esta función estará disponible pronto.');
   }
 }

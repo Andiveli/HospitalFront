@@ -60,9 +60,7 @@ export default class AgendarCitaComponent {
       });
     });
 
-    return Array.from(especialidadesMap.values()).sort((a, b) =>
-      a.nombre.localeCompare(b.nombre)
-    );
+    return Array.from(especialidadesMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   // Computed: filtered doctors based on selected specialty
@@ -74,9 +72,7 @@ export default class AgendarCitaComponent {
       return allDoctors; // Show all doctors when no filter
     }
 
-    return allDoctors.filter((m) => 
-      m.especialidades.some(esp => esp.id === especialidadId)
-    );
+    return allDoctors.filter((m) => m.especialidades.some((esp) => esp.id === especialidadId));
   });
 
   // =====================================
@@ -94,6 +90,7 @@ export default class AgendarCitaComponent {
   selectedSlot = signal<SlotDisponibleDto | null>(null);
 
   // Appointment type: telefonica = true (videocall), false (presencial)
+  // TEMPORARY: Force telefonica until presencial functionality is ready
   isTelefonica = signal(true);
 
   // =====================================
@@ -106,9 +103,7 @@ export default class AgendarCitaComponent {
   // COMPUTED - For Templates
   // =====================================
   canGoToStep2 = computed(() => this.selectedMedico() !== null);
-  canGoToStep3 = computed(
-    () => this.selectedDate() !== null && this.selectedSlot() !== null
-  );
+  canGoToStep3 = computed(() => this.selectedDate() !== null && this.selectedSlot() !== null);
 
   selectedMedicoName = computed(() => {
     const medico = this.selectedMedico();
@@ -117,7 +112,7 @@ export default class AgendarCitaComponent {
 
   selectedMedicoEspecialidad = computed(() => {
     const medico = this.selectedMedico();
-    return medico ? (medico.especialidades[0]?.nombre || 'General') : '';
+    return medico ? medico.especialidades[0]?.nombre || 'General' : '';
   });
 
   selectedDateTime = computed(() => {
@@ -203,17 +198,16 @@ export default class AgendarCitaComponent {
     this.loadingSlots.set(true);
     this.selectedSlot.set(null); // Reset selected slot
     this.error.set(null); // Clear previous errors
-    
+
     try {
-      const disponibilidad = await this.medicosService.getDisponibilidad(
-        medicoId,
-        fecha
-      );
+      const disponibilidad = await this.medicosService.getDisponibilidad(medicoId, fecha);
 
       // Check if doctor works this day
       if (!disponibilidad.atiende) {
         this.availableSlots.set([]);
-        this.error.set(disponibilidad.mensaje || 'El médico no atiende este día. Selecciona otra fecha.');
+        this.error.set(
+          disponibilidad.mensaje || 'El médico no atiende este día. Selecciona otra fecha.',
+        );
         return;
       }
 
@@ -221,15 +215,15 @@ export default class AgendarCitaComponent {
       let filteredSlots = disponibilidad.slots;
       const now = new Date();
       const selectedDate = this.selectedDate();
-      
+
       if (selectedDate) {
         const isToday = this.isSameDay(selectedDate, now);
-        
+
         if (isToday) {
           const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-          
+
           // Only show slots that start AFTER current time
-          filteredSlots = disponibilidad.slots.filter(slot => {
+          filteredSlots = disponibilidad.slots.filter((slot) => {
             return slot.horaInicio > currentTime;
           });
         }
@@ -237,10 +231,12 @@ export default class AgendarCitaComponent {
 
       // Set available slots
       this.availableSlots.set(filteredSlots);
-      
+
       if (filteredSlots.length === 0) {
         if (disponibilidad.slots.length === 0) {
-          this.error.set('No hay horarios disponibles para esta fecha. Todos los turnos están ocupados.');
+          this.error.set(
+            'No hay horarios disponibles para esta fecha. Todos los turnos están ocupados.',
+          );
         } else {
           this.error.set('No hay horarios disponibles. Todos los turnos de hoy ya pasaron.');
         }
@@ -310,11 +306,11 @@ export default class AgendarCitaComponent {
   // Generate next 14 days (2 weeks) for date selection, filtered by working days
   generateAvailableDays(workingDays: Set<number>): void {
     const days: { date: Date; label: string }[] = [];
-    
+
     // Get current date in local timezone (no UTC issues)
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     let daysAdded = 0;
     let offset = 0;
 
@@ -326,7 +322,7 @@ export default class AgendarCitaComponent {
 
       // Check if this day is a working day
       const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      
+
       if (workingDays.has(dayOfWeek)) {
         let label = '';
         if (offset === 0) label = 'Hoy';
@@ -390,9 +386,7 @@ export default class AgendarCitaComponent {
       // Success! Redirect to appointments list
       await this.router.navigate(['/citas']);
     } catch (error: any) {
-      this.error.set(
-        error?.error?.message || 'Error al agendar la cita. Intenta de nuevo.'
-      );
+      this.error.set(error?.error?.message || 'Error al agendar la cita. Intenta de nuevo.');
     } finally {
       this.submitting.set(false);
     }

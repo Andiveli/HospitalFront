@@ -1,0 +1,62 @@
+.sala-espera-paciente {
+  aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 768px) {
+  .sala-espera-paciente {
+    .grid-cols-1.lg\:grid-cols-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* Animaciones para los botones */
+.sala-espera-paciente {
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  button {
+    transition: all 0.2s ease;
+  }
+  
+  button:hover:not(:disabled) {
+    transform: scale(1.05);
+  }
+  
+  button:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+/* Efectos de video */
+.sala-espera-paciente {
+  video {
+    transform: scaleX(-1); /* Espejo para video local */
+    border-radius: 0.75rem;
+  }
+}
+
+/* Estados de conexión */
+.sala-espera-paciente {
+  .connection-indicator {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .pulse-animation {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

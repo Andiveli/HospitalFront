@@ -37,10 +37,10 @@ export class LoginComponent {
     } catch (error: any) {
       // Manejar diferentes tipos de errores
       let message = 'Error al iniciar sesión. Intentá de nuevo.';
-      
+
       if (error?.error?.message) {
         // Mensaje del backend
-        message = Array.isArray(error.error.message) 
+        message = Array.isArray(error.error.message)
           ? error.error.message.join(', ')
           : error.error.message;
       } else if (error?.message) {
@@ -50,7 +50,7 @@ export class LoginComponent {
         // Error de conexión
         message = 'No se puede conectar al servidor. Verificá que el backend esté corriendo.';
       }
-      
+
       this.errorMessage.set(message);
     }
   }

@@ -68,11 +68,21 @@ export const routes: Routes = [
           },
           {
             path: ':id',
-            loadComponent: () => import('./features/citas/detalle/detalle-cita.component'),
+            loadComponent: () => import('./features/citas/detalle/detalle-cita.component').then(m => m.default),
             title: 'Detalle de Cita - Hospital App'
           }
-        ]
-      },
+    ]
+  },
+  {
+    path: 'sala-espera/:id',
+    loadComponent: () => import('./features/video-call/sala-espera-paciente/sala-espera-paciente.component').then(m => m.SalaEsperaPacienteComponent),
+    title: 'Sala de Espera - Hospital App'
+  },
+  {
+    path: 'sala-espera-invitado/:code',
+    loadComponent: () => import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(m => m.SalaEsperaInvitadoComponent),
+    title: 'Sala de Espera Invitado - Hospital App'
+  },
       {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
@@ -80,7 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'ajustes',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        loadComponent: () => import('./features/ajustes/ajustes.component').then(m => m.AjustesComponent),
         title: 'Ajustes - Hospital App'
       },
       {

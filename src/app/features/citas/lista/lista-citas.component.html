@@ -17,93 +17,398 @@
   <section class="mb-12">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-semibold text-slate-900">Citas Agendadas</h2>
-      @if (proximasCitas().length > 0) {
+      @if (proximasCitas().length > 0 || showAllPendientes()) {
         <button
-          (click)="verTodasPendientes()"
+          (click)="toggleVerTodasPendientes()"
           class="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
-          <span>Mostrar todo</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          <span>{{ showAllPendientes() ? 'Mostrar menos' : 'Mostrar todo' }}</span>
+          <svg 
+            class="w-4 h-4 transition-transform" 
+            [style.transform]="!showAllPendientes() ? 'rotate(0deg)' : 'rotate(180deg)'"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       }
     </div>
 
-    @if (loadingProximas()) {
-      <div class="text-center py-12">
-        <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 text-slate-600">Cargando citas...</p>
-      </div>
-    } @else {
-      @if (proximasCitas().length > 0) {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          @for (cita of proximasCitas(); track cita.id) {
-            <div class="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <div class="flex gap-4">
-                <!-- Date Badge -->
-                <div class="flex flex-col items-center justify-center bg-blue-50 rounded-lg px-4 py-2 min-w-[80px]">
-                  <p class="text-3xl font-bold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
-                  <p class="text-sm font-semibold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+    @if (showAllPendientes()) {
+      <!-- Loading State -->
+      @if (loadingTodasPendientes()) {
+        <div class="space-y-4 mb-6">
+          @for (_ of [1,2,3,4,5,6]; track $index) {
+            <div class="bg-white border border-slate-200 rounded-lg p-4 animate-pulse">
+              <div class="flex items-center gap-4">
+                <div class="w-[60px] h-[60px] bg-slate-200 rounded-lg"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+                  <div class="h-3 bg-slate-200 rounded w-1/4"></div>
+                  <div class="h-3 bg-slate-200 rounded w-1/5"></div>
                 </div>
-
-                <!-- Appointment Info -->
-                <div class="flex-1">
-                  <h3 class="font-semibold text-slate-900 mb-1">{{ getMedicoNombre(cita) }}</h3>
-                  <p class="text-sm text-slate-600 mb-2">{{ getEspecialidad(cita) }}</p>
-                  <p class="text-sm text-slate-500 flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {{ formatTime(cita.fechaHoraInicio) }}
-                  </p>
-
-                  <!-- Modalidad Badge -->
-                  <div class="mt-2">
-                    @if (cita.telefonica) {
-                      <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                        </svg>
-                        Videoconsulta
-                      </span>
-                    } @else {
-                      <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                        </svg>
-                        Presencial
-                      </span>
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="mt-4 flex gap-2">
-                <button
-                  (click)="verDetalle(cita.id)"
-                  class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-                >
-                  DETALLES
-                </button>
+                <div class="w-24 h-8 bg-slate-200 rounded"></div>
               </div>
             </div>
           }
         </div>
       } @else {
-        <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
-          <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <p class="text-slate-600 mb-4">No tienes citas agendadas</p>
-          <button
-            (click)="agendarNuevaCita()"
-            class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
-          >
-            Agendar tu primera cita
-          </button>
+        @if (todasPendientes().length > 0) {
+          <!-- View Toggle & Counter -->
+          <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <!-- View Toggle -->
+            <div class="flex items-center gap-2">
+              <button
+                (click)="vistaGridPendientes.set(true)"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                [class.bg-blue-100]="vistaGridPendientes()"
+                [class.text-blue-700]="vistaGridPendientes()"
+                [class.text-slate-600]="!vistaGridPendientes()"
+                [class.hover:bg-slate-100]="!vistaGridPendientes()"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+              <button
+                (click)="vistaGridPendientes.set(false)"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                [class.bg-blue-100]="!vistaGridPendientes()"
+                [class.text-blue-700]="!vistaGridPendientes()"
+                [class.text-slate-600]="vistaGridPendientes()"
+                [class.hover:bg-slate-100]="vistaGridPendientes()"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Counter -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-slate-600">
+                <span class="font-semibold text-slate-900">{{ getStartIndex(currentPagePendientes()) }}-{{ getEndIndex(currentPagePendientes(), totalPendientes()) }}</span>
+                <span class="mx-1">de</span>
+                <span class="font-semibold text-slate-900">{{ totalPendientes() }}</span>
+                <span class="ml-1">{{ totalPendientes() === 1 ? 'cita' : 'citas' }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Grid View -->
+          @if (vistaGridPendientes()) {
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+              @for (cita of todasPendientes(); track cita.id) {
+                <div class="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-all hover:border-blue-300">
+                  <div class="flex gap-3">
+                    <!-- Date Badge -->
+                    <div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 min-w-[70px]">
+                      <p class="text-2xl font-bold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
+                      <p class="text-xs font-semibold text-blue-600 uppercase">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+                    </div>
+
+                    <!-- Appointment Info -->
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-slate-900 mb-1 truncate">{{ getMedicoNombre(cita) }}</h3>
+                      <p class="text-xs text-slate-600 mb-2 truncate">{{ getEspecialidad(cita) }}</p>
+                      <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-xs text-slate-500 font-medium">{{ formatTime(cita.fechaHoraInicio) }}</span>
+                      </div>
+
+                      <!-- Modalidad Badge -->
+                      @if (cita.telefonica) {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          Videoconsulta
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                          </svg>
+                          Presencial
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                   <!-- Actions -->
+                   <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                     <!-- Video Call Actions (only for telefonica appointments) -->
+                     @if (cita.telefonica && !hasSalaExpired(cita)) {
+                       @if (isIngresarSalaReady(cita)) {
+                         <button
+                           (click)="ingresarASala(cita.id)"
+                           class="w-full px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                         >
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                           </svg>
+                           <span>Ingresar a Sala</span>
+                         </button>
+                       } @else {
+                         <div class="text-center px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm">
+                           <p class="font-medium">{{ getTimeUntilSalaReady(cita) }}</p>
+                           <p class="text-xs mt-0.5">para ingresar a sala</p>
+                         </div>
+                       }
+                     }
+
+                     <!-- Ver Detalles Button -->
+                     <button
+                       (click)="verDetalle(cita.id)"
+                       class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                     >
+                       Ver Detalles
+                     </button>
+                   </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- List View (More Compact) -->
+            <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100 mb-6">
+              @for (cita of todasPendientes(); track cita.id) {
+                <div class="p-4 hover:bg-slate-50 transition-colors">
+                  <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 flex-1 min-w-0">
+                      <!-- Date Badge Compact -->
+                      <div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 min-w-[60px] flex-shrink-0">
+                        <p class="text-xl font-bold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
+                        <p class="text-xs font-semibold text-blue-600 uppercase">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+                      </div>
+
+                      <!-- Info -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                          <h3 class="font-semibold text-slate-900 truncate">{{ getMedicoNombre(cita) }}</h3>
+                          @if (cita.telefonica) {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded flex-shrink-0">
+                              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                              </svg>
+                              <span class="hidden sm:inline">Videoconsulta</span>
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded flex-shrink-0">
+                              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                              </svg>
+                              <span class="hidden sm:inline">Presencial</span>
+                            </span>
+                          }
+                        </div>
+                        <p class="text-sm text-slate-600 truncate mb-1">{{ getEspecialidad(cita) }}</p>
+                        <div class="flex items-center gap-1 text-xs text-slate-500">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="font-medium">{{ formatTime(cita.fechaHoraInicio) }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                     <!-- Action Buttons -->
+                     <div class="flex items-center gap-2">
+                       <!-- Video Call Actions (only for telefonica appointments) -->
+                       @if (cita.telefonica && !hasSalaExpired(cita)) {
+                         @if (isIngresarSalaReady(cita)) {
+                           <button
+                             (click)="ingresarASala(cita.id)"
+                             class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors flex items-center gap-1 flex-shrink-0"
+                           >
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                             </svg>
+                             <span class="hidden sm:inline">Ingresar</span>
+                           </button>
+                         } @else {
+                           <div class="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm flex-shrink-0 text-center min-w-[80px]">
+                             <p class="font-medium text-xs">{{ getTimeUntilSalaReady(cita) }}</p>
+                           </div>
+                         }
+                       }
+
+                       <!-- Ver Detalles Button -->
+                       <button
+                         (click)="verDetalle(cita.id)"
+                         class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex-shrink-0"
+                       >
+                         <span class="hidden sm:inline">Ver Detalles</span>
+                         <span class="sm:hidden">Detalles</span>
+                       </button>
+                     </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Pagination -->
+          @if (totalPagesPendientes() > 1) {
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+              <!-- First Page -->
+              @if (currentPagePendientes() > 2) {
+                <button
+                  (click)="goToPagePendientes(1)"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50"
+                >
+                  1
+                </button>
+                @if (currentPagePendientes() > 3) {
+                  <span class="px-2 text-slate-400">...</span>
+                }
+              }
+
+              <!-- Previous -->
+              <button
+                (click)="goToPagePendientes(currentPagePendientes() - 1)"
+                [disabled]="currentPagePendientes() === 1"
+                class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <!-- Current and Adjacent Pages -->
+              @for (page of getVisiblePages(currentPagePendientes(), totalPagesPendientes()); track page) {
+                <button
+                  (click)="goToPagePendientes(page)"
+                  [class.bg-blue-600]="page === currentPagePendientes()"
+                  [class.text-white]="page === currentPagePendientes()"
+                  [class.border-blue-600]="page === currentPagePendientes()"
+                  [class.text-slate-600]="page !== currentPagePendientes()"
+                  [class.hover:bg-blue-50]="page !== currentPagePendientes()"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm transition-colors"
+                >
+                  {{ page }}
+                </button>
+              }
+              
+              <!-- Next -->
+              <button
+                (click)="goToPagePendientes(currentPagePendientes() + 1)"
+                [disabled]="currentPagePendientes() === totalPagesPendientes()"
+                class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <!-- Last Page -->
+              @if (currentPagePendientes() < totalPagesPendientes() - 1) {
+                @if (currentPagePendientes() < totalPagesPendientes() - 2) {
+                  <span class="px-2 text-slate-400">...</span>
+                }
+                <button
+                  (click)="goToPagePendientes(totalPagesPendientes())"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50"
+                >
+                  {{ totalPagesPendientes() }}
+                </button>
+              }
+            </div>
+          }
+        } @else {
+          <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="text-slate-600 mb-4">No tienes citas pendientes</p>
+            <button
+              (click)="agendarNuevaCita()"
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Agendar tu primera cita
+            </button>
+          </div>
+        }
+      }
+    } @else {
+      @if (loadingProximas()) {
+        <div class="text-center py-12">
+          <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p class="mt-4 text-slate-600">Cargando citas...</p>
         </div>
+      } @else {
+        @if (proximasCitas().length > 0) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (cita of proximasCitas(); track cita.id) {
+              <div class="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div class="flex gap-4">
+                  <!-- Date Badge -->
+                  <div class="flex flex-col items-center justify-center bg-blue-50 rounded-lg px-4 py-2 min-w-[80px]">
+                    <p class="text-3xl font-bold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
+                    <p class="text-sm font-semibold text-blue-600">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+                  </div>
+
+                  <!-- Appointment Info -->
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-slate-900 mb-1">{{ getMedicoNombre(cita) }}</h3>
+                    <p class="text-sm text-slate-600 mb-2">{{ getEspecialidad(cita) }}</p>
+                    <p class="text-sm text-slate-500 flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {{ formatTime(cita.fechaHoraInicio) }}
+                    </p>
+
+                    <!-- Modalidad Badge -->
+                    <div class="mt-2">
+                      @if (cita.telefonica) {
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          Videoconsulta
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                          </svg>
+                          Presencial
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-4 flex gap-2">
+                  <button
+                    (click)="verDetalle(cita.id)"
+                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                  >
+                    DETALLES
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p class="text-slate-600 mb-4">No tienes citas agendadas</p>
+            <button
+              (click)="agendarNuevaCita()"
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Agendar tu primera cita
+            </button>
+          </div>
+        }
       }
     }
   </section>
@@ -112,62 +417,223 @@
   <section>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-2xl font-semibold text-slate-900">Historial de Citas</h2>
-      @if (historialCitas().length > 0) {
+      @if (historialCitas().length > 0 || showAllAtendidas()) {
         <button
-          (click)="verTodasAtendidas()"
+          (click)="toggleVerTodasAtendidas()"
           class="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
         >
-          <span>Ver todo</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          <span>{{ showAllAtendidas() ? 'Mostrar menos' : 'Ver todo' }}</span>
+          <svg 
+            class="w-4 h-4 transition-transform" 
+            [style.transform]="!showAllAtendidas() ? 'rotate(0deg)' : 'rotate(180deg)'"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       }
     </div>
 
-    @if (loadingHistorial()) {
-      <div class="text-center py-12">
-        <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 text-slate-600">Cargando historial...</p>
-      </div>
-    } @else {
-      @if (historialCitas().length > 0) {
-        <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-200">
-          @for (cita of historialCitas(); track cita.id) {
-            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-              <div class="flex items-center gap-4">
-                <!-- Calendar Icon -->
-                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+    @if (showAllAtendidas()) {
+      <!-- Loading State -->
+      @if (loadingTodasAtendidas()) {
+        <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100 mb-6">
+          @for (_ of [1,2,3,4,5,6]; track $index) {
+            <div class="p-4 animate-pulse">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                  <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+                    <div class="h-3 bg-slate-200 rounded w-1/4"></div>
+                    <div class="h-3 bg-slate-200 rounded w-1/5"></div>
+                  </div>
                 </div>
-
-                <!-- Appointment Info -->
-                <div>
-                  <p class="font-semibold text-slate-900">{{ getMedicoNombre(cita) }}</p>
-                  <p class="text-sm text-slate-600">{{ getEspecialidad(cita) }}</p>
-                  <p class="text-sm text-slate-500 mt-1">{{ formatDateTime(cita.fechaHoraInicio) }}</p>
-                </div>
+                <div class="w-24 h-8 bg-slate-200 rounded"></div>
               </div>
-
-              <!-- Action -->
-              <button
-                (click)="verDetalle(cita.id)"
-                class="px-6 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-200"
-              >
-                Ver Detalles
-              </button>
             </div>
           }
         </div>
       } @else {
-        <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
-          <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <p class="text-slate-600">No tienes citas en tu historial</p>
+        @if (todasAtendidas().length > 0) {
+          <!-- Counter -->
+          <div class="mb-4 flex items-center gap-2">
+            <span class="text-sm text-slate-600">
+              <span class="font-semibold text-slate-900">{{ getStartIndex(currentPageAtendidas()) }}-{{ getEndIndex(currentPageAtendidas(), totalAtendidas()) }}</span>
+              <span class="mx-1">de</span>
+              <span class="font-semibold text-slate-900">{{ totalAtendidas() }}</span>
+              <span class="ml-1">{{ totalAtendidas() === 1 ? 'cita' : 'citas' }}</span>
+            </span>
+          </div>
+
+          <!-- All Attended Appointments List -->
+          <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100 mb-6">
+            @for (cita of todasAtendidas(); track cita.id) {
+              <div class="p-4 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-4 flex-1 min-w-0">
+                    <!-- Date Badge Compact -->
+                    <div class="flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg px-3 py-2 min-w-[60px] flex-shrink-0">
+                      <p class="text-xl font-bold text-slate-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
+                      <p class="text-xs font-semibold text-slate-600 uppercase">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-slate-900 truncate mb-1">{{ getMedicoNombre(cita) }}</h3>
+                      <p class="text-sm text-slate-600 truncate mb-1">{{ getEspecialidad(cita) }}</p>
+                      <div class="flex items-center gap-1 text-xs text-slate-500">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-medium">{{ formatTime(cita.fechaHoraInicio) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action -->
+                  <button
+                    (click)="verDetalle(cita.id)"
+                    class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors flex-shrink-0"
+                  >
+                    <span class="hidden sm:inline">Ver Detalles</span>
+                    <span class="sm:hidden">Detalles</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPagesAtendidas() > 1) {
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+              <!-- First Page -->
+              @if (currentPageAtendidas() > 2) {
+                <button
+                  (click)="goToPageAtendidas(1)"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50"
+                >
+                  1
+                </button>
+                @if (currentPageAtendidas() > 3) {
+                  <span class="px-2 text-slate-400">...</span>
+                }
+              }
+
+              <!-- Previous -->
+              <button
+                (click)="goToPageAtendidas(currentPageAtendidas() - 1)"
+                [disabled]="currentPageAtendidas() === 1"
+                class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <!-- Current and Adjacent Pages -->
+              @for (page of getVisiblePages(currentPageAtendidas(), totalPagesAtendidas()); track page) {
+                <button
+                  (click)="goToPageAtendidas(page)"
+                  [class.bg-blue-600]="page === currentPageAtendidas()"
+                  [class.text-white]="page === currentPageAtendidas()"
+                  [class.border-blue-600]="page === currentPageAtendidas()"
+                  [class.text-slate-600]="page !== currentPageAtendidas()"
+                  [class.hover:bg-blue-50]="page !== currentPageAtendidas()"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm transition-colors"
+                >
+                  {{ page }}
+                </button>
+              }
+              
+              <!-- Next -->
+              <button
+                (click)="goToPageAtendidas(currentPageAtendidas() + 1)"
+                [disabled]="currentPageAtendidas() === totalPagesAtendidas()"
+                class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <!-- Last Page -->
+              @if (currentPageAtendidas() < totalPagesAtendidas() - 1) {
+                @if (currentPageAtendidas() < totalPagesAtendidas() - 2) {
+                  <span class="px-2 text-slate-400">...</span>
+                }
+                <button
+                  (click)="goToPageAtendidas(totalPagesAtendidas())"
+                  class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50"
+                >
+                  {{ totalPagesAtendidas() }}
+                </button>
+              }
+            </div>
+          }
+        } @else {
+          <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-slate-600">No tienes citas en tu historial</p>
+          </div>
+        }
+      }
+    } @else {
+      @if (loadingHistorial()) {
+        <div class="text-center py-12">
+          <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p class="mt-4 text-slate-600">Cargando historial...</p>
         </div>
+      } @else {
+        @if (historialCitas().length > 0) {
+          <div class="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
+            @for (cita of historialCitas(); track cita.id) {
+              <div class="p-4 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-4 flex-1 min-w-0">
+                    <!-- Date Badge Compact -->
+                    <div class="flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg px-3 py-2 min-w-[60px] flex-shrink-0">
+                      <p class="text-xl font-bold text-slate-600">{{ formatDateShort(cita.fechaHoraInicio).day }}</p>
+                      <p class="text-xs font-semibold text-slate-600 uppercase">{{ formatDateShort(cita.fechaHoraInicio).month }}</p>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-slate-900 truncate mb-1">{{ getMedicoNombre(cita) }}</h3>
+                      <p class="text-sm text-slate-600 truncate mb-1">{{ getEspecialidad(cita) }}</p>
+                      <div class="flex items-center gap-1 text-xs text-slate-500">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-medium">{{ formatTime(cita.fechaHoraInicio) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action -->
+                  <button
+                    (click)="verDetalle(cita.id)"
+                    class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors flex-shrink-0"
+                  >
+                    <span class="hidden sm:inline">Ver Detalles</span>
+                    <span class="sm:hidden">Detalles</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-slate-600">No tienes citas en tu historial</p>
+          </div>
+        }
       }
     }
   </section>

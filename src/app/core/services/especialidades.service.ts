@@ -20,7 +20,7 @@ export class EspecialidadesService {
    * GET /especialidades?page=1&limit=50
    */
   async getEspecialidades(
-    params: PaginationParams = { page: 1, limit: 50 }
+    params: PaginationParams = { page: 1, limit: 50 },
   ): Promise<PaginatedResponse<EspecialidadDto>> {
     const httpParams = new HttpParams()
       .set('page', params.page.toString())
@@ -29,7 +29,7 @@ export class EspecialidadesService {
     return firstValueFrom(
       this.http.get<PaginatedResponse<EspecialidadDto>>(this.baseUrl, {
         params: httpParams,
-      })
+      }),
     );
   }
 
@@ -38,24 +38,21 @@ export class EspecialidadesService {
    */
   async getAllEspecialidades(): Promise<EspecialidadDto[]> {
     const firstPage = await this.getEspecialidades({ page: 1, limit: 100 });
-    
+
     // If we have more pages, fetch them all
     if (firstPage.meta.totalPages > 1) {
       const promises: Promise<PaginatedResponse<EspecialidadDto>>[] = [];
-      
+
       for (let i = 2; i <= firstPage.meta.totalPages; i++) {
         promises.push(this.getEspecialidades({ page: i, limit: 100 }));
       }
-      
+
       const results = await Promise.all(promises);
-      const allData = [
-        ...firstPage.data,
-        ...results.flatMap((r) => r.data),
-      ];
-      
+      const allData = [...firstPage.data, ...results.flatMap((r) => r.data)];
+
       return allData;
     }
-    
+
     return firstPage.data;
   }
 }

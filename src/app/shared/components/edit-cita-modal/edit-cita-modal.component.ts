@@ -1,12 +1,4 @@
-import {
-  Component,
-  signal,
-  inject,
-  output,
-  input,
-  effect,
-  computed,
-} from '@angular/core';
+import { Component, signal, inject, output, input, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CitasService } from '../../../core/services/citas.service';
@@ -45,7 +37,8 @@ export default class EditCitaModalComponent {
   // Form data
   selectedDate = signal<Date | null>(null);
   selectedSlot = signal<SlotDisponibleDto | null>(null);
-  telefonica = signal(false);
+  // TEMPORARY: Force telefonica until presencial functionality is ready
+  telefonica = signal(true);
 
   // Disponibilidad data
   diasAtencion = signal<number[]>([]);
@@ -164,10 +157,7 @@ export default class EditCitaModalComponent {
     try {
       const medicoId = this.cita().medico.id;
       const dateStr = this.formatDateForAPI(date);
-      const disp = await this.medicosService.getDisponibilidad(
-        medicoId,
-        dateStr
-      );
+      const disp = await this.medicosService.getDisponibilidad(medicoId, dateStr);
       this.disponibilidad.set(disp);
 
       if (!disp.atiende) {
@@ -257,7 +247,8 @@ export default class EditCitaModalComponent {
 
       const updateDto: UpdateCitaDto = {
         fechaHoraInicio: fechaHoraInicio.toISOString(),
-        telefonica: this.telefonica(),
+        // TEMPORARY: Force telefonica until presencial functionality is ready
+        telefonica: true,
       };
 
       await this.citasService.updateCita(this.cita().id, updateDto);
@@ -267,9 +258,7 @@ export default class EditCitaModalComponent {
       this.onSave.emit();
     } catch (error: any) {
       console.error('Error updating cita:', error);
-      this.error.set(
-        error?.error?.message || 'Error al actualizar la cita. Intente nuevamente.'
-      );
+      this.error.set(error?.error?.message || 'Error al actualizar la cita. Intente nuevamente.');
     } finally {
       this.loading.set(false);
     }

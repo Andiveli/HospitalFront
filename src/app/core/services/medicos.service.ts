@@ -5,7 +5,6 @@ import {
   MedicoDisponibleDto,
   BackendMedicosResponseDto,
   DiasAtencionApiResponseDto,
-  SlotDisponibleDto,
   DisponibilidadResponseDto,
 } from '../models';
 import { environment } from '../../../environments/environment';
@@ -16,10 +15,6 @@ import { environment } from '../../../environments/environment';
 export class MedicosService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/citas/medicos`;
-
-  // =====================================
-  // GET - List Doctors
-  // =====================================
 
   /**
    * Get list of available doctors
@@ -38,28 +33,8 @@ export class MedicosService {
     return response.data || [];
   }
 
-  // =====================================
-  // GET - Doctor's Working Days
-  // =====================================
-
   /**
    * Get days a doctor works
-   * GET /citas/medicos/{medicoId}/dias-atencion
-   *
-   * Returns array of working days with time ranges
-   * diaSemana: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-   */
-  /**
-   * Get days a doctor works
-   * GET /citas/medicos/{medicoId}/dias-atencion
-   *
-   * Backend returns:
-   * {
-   *   message: "Días de atención obtenidos exitosamente",
-   *   data: {
-   *     diasAtencion: ["Lunes", "Miércoles", "Viernes"]
-   *   }
-   * }
    *
    * @returns Array of day numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
    */
@@ -98,22 +73,8 @@ export class MedicosService {
     }
   }
 
-  // =====================================
-  // GET - Doctor's Available Slots
-  // =====================================
-
   /**
    * Get available 30-minute time slots for a specific date
-   * GET /citas/medicos/{medicoId}/disponibilidad?fecha=YYYY-MM-DD
-   *
-   * Backend returns:
-   * {
-   *   fecha: "2026-01-28",
-   *   diaSemana: "Miércoles",
-   *   atiende: true,
-   *   slots: [{ horaInicio: "14:00", horaFin: "14:30" }, ...],
-   *   mensaje?: "El médico no atiende los jueves"
-   * }
    *
    * @param medicoId - Doctor ID
    * @param fecha - Date in YYYY-MM-DD format
@@ -143,10 +104,6 @@ export class MedicosService {
       };
     }
   }
-
-  // =====================================
-  // HELPER METHODS
-  // =====================================
 
   /**
    * Format date for API (YYYY-MM-DD)

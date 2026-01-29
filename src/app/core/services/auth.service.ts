@@ -12,6 +12,7 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
   MensajeResponseDto,
+  EnfermedadPaciente,
 } from '../models';
 
 @Injectable({
@@ -145,9 +146,15 @@ export class AuthService {
         this.http.get<BackendPerfilResponseDto>(`${this.API_URL}/perfil`),
       );
 
+      // Mapear enfermedades del backend al formato del frontend
+      const enfermedadesMap = backendResponse.data.perfiles.paciente?.enfermedades || {};
+      const enfermedades: EnfermedadPaciente[] = Object.entries(enfermedadesMap).map(
+        ([nombre, tipo]) => ({ nombre, tipo }),
+      );
       // Mapear la respuesta del backend al formato del frontend
       const profile: PerfilResponseDto = {
         id: backendResponse.data.userId,
+        cedula: backendResponse.data.perfiles.paciente?.cedula,
         email: backendResponse.data.email,
         nombreCompleto: backendResponse.data.perfiles.paciente?.nombres.trim() || 'Usuario',
         roles: backendResponse.data.roles,
@@ -159,6 +166,7 @@ export class AuthService {
         sangre: backendResponse.data.perfiles.paciente?.sangre,
         estilo: backendResponse.data.perfiles.paciente?.estilo,
         imagen: backendResponse.data.perfiles.paciente?.imagen,
+        enfermedades,
       };
 
       this.userSignal.set(profile);

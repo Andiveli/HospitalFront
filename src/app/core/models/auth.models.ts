@@ -37,6 +37,7 @@ export interface BackendPerfilResponseDto {
     roles: string[];
     perfiles: {
       paciente?: {
+        cedula: string;
         nombres: string;
         edad: number;
         email: string;
@@ -53,9 +54,16 @@ export interface BackendPerfilResponseDto {
   };
 }
 
+// Enfermedad del paciente
+export interface EnfermedadPaciente {
+  nombre: string;
+  tipo: string; // "Preexistente", "Hereditaria", etc.
+}
+
 // Perfil normalizado para el frontend
 export interface PerfilResponseDto {
   id: number;
+  cedula?: string;
   email: string;
   nombreCompleto: string;
   roles: string[];
@@ -67,6 +75,7 @@ export interface PerfilResponseDto {
   sangre?: string;
   estilo?: string;
   imagen?: string | null;
+  enfermedades: EnfermedadPaciente[];
 }
 
 // Password Recovery
@@ -81,7 +90,8 @@ export interface ResetPasswordDto {
 // Change Password
 export interface ChangePasswordDto {
   passwordActual: string;
-  passwordNuevo: string;
+  newPassword: string;
+  confirmNewPass: string;
 }
 
 // Generic Message Response

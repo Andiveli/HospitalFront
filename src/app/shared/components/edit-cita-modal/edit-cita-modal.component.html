@@ -13,11 +13,16 @@
             class="text-slate-400 hover:text-slate-600 transition"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
-        
+
         <!-- Current Appointment Info -->
         <div class="mt-4 p-4 bg-slate-50 rounded-lg">
           <p class="text-sm text-slate-600 mb-1">Médico</p>
@@ -48,9 +53,7 @@
             (change)="onDateChange($event)"
             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
           />
-          <p class="mt-1 text-xs text-slate-500">
-            La cita debe ser al menos 72 horas en el futuro
-          </p>
+          <p class="mt-1 text-xs text-slate-500">La cita debe ser al menos 72 horas en el futuro</p>
         </div>
 
         <!-- Time Slots -->
@@ -63,7 +66,9 @@
             <!-- Loading State -->
             @if (loadingDisponibilidad()) {
               <div class="text-center py-8">
-                <div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div
+                  class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
+                ></div>
                 <p class="mt-2 text-sm text-slate-600">Cargando horarios...</p>
               </div>
             }
@@ -102,19 +107,20 @@
           <label class="block text-sm font-medium text-slate-700 mb-3">
             Modalidad de Atención
           </label>
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                [checked]="telefonica()"
-                (change)="onTelefonicaChange($event)"
-                class="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-600"
-              />
-              <span class="text-slate-700">Videoconsulta</span>
-            </label>
-            <p class="text-sm text-slate-500">
-              {{ telefonica() ? 'La cita será virtual' : 'La cita será presencial' }}
-            </p>
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+            <div class="flex items-center gap-3">
+              <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              </svg>
+              <div>
+                <p class="font-semibold text-slate-900">Videoconsulta</p>
+                <p class="text-sm text-slate-600">La cita será virtual</p>
+              </div>
+            </div>
+            <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+              <p class="font-medium">Nota:</p>
+              <p>Las citas presenciales no están disponibles temporalmente. Solo se pueden agendar videollamadas.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -137,7 +143,9 @@
         >
           @if (loading()) {
             <span class="flex items-center justify-center gap-2">
-              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div
+                class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+              ></div>
               Guardando...
             </span>
           } @else {
