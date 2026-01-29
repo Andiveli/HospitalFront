@@ -25,14 +25,14 @@ export interface VideoRoomSessionDto {
 
 // Participant information
 export interface ParticipantInfoDto {
-  id: string;               // Socket ID or unique identifier
-  name: string;             // Display name
-  role: ParticipantRole;      // Role in the call
-  isVideoEnabled: boolean;   // Video stream status
-  isAudioEnabled: boolean;   // Audio stream status
-  isSpeaking: boolean;      // Currently speaking
-  joinedAt: string;         // When they joined the room
-  mediaStream?: MediaStream;  // WebRTC media stream (frontend only)
+  id: string; // Socket ID or unique identifier
+  name: string; // Display name
+  role: ParticipantRole; // Role in the call
+  isVideoEnabled: boolean; // Video stream status
+  isAudioEnabled: boolean; // Audio stream status
+  isSpeaking: boolean; // Currently speaking
+  joinedAt: string; // When they joined the room
+  mediaStream?: MediaStream; // WebRTC media stream (frontend only)
 }
 
 // Guest invitation creation request
@@ -44,23 +44,23 @@ export interface GenerarInvitacionDto {
 // Guest invitation response
 export interface InvitacionResponseDto {
   id: string;
-  codigo: string;            // 8-character access code
+  codigo: string; // 8-character access code
   nombreInvitado: string;
   rolInvitado: GuestRole;
   citaId: number;
-  createdBy: string;         // Who created the invitation
+  createdBy: string; // Who created the invitation
   createdAt: string;
   expiresAt: string;
-  accessUrl: string;        // Full URL for guest access
+  accessUrl: string; // Full URL for guest access
 }
 
 // Guest invitation creation response (from video-rooms endpoint)
 export interface GenerateGuestLinkResponseDto {
-  guestCode: string;           // 8-character code
-  accessUrl: string;            // Full URL
-  expiresIn: number;            // Hours until expiry (default: 24)
-  maxUses: number;             // Max times link can be used
-  currentUses: number;          // How many times used
+  guestCode: string; // 8-character code
+  accessUrl: string; // Full URL
+  expiresIn: number; // Hours until expiry (default: 24)
+  maxUses: number; // Max times link can be used
+  currentUses: number; // How many times used
 }
 
 // Guest validation response (public endpoint)
@@ -81,11 +81,11 @@ export interface GuestValidationDto {
 
 // WebRTC signaling DTO
 export interface WebRtcSignalDto {
-  to: string;               // Recipient participant ID
-  from: string;             // Sender participant ID
-  type: SignalType;         // Signal type
-  payload: object;          // SDP offer/answer or ICE candidate
-  timestamp: string;         // When signal was sent
+  to: string; // Recipient participant ID
+  from: string; // Sender participant ID
+  type: SignalType; // Signal type
+  payload: object; // SDP offer/answer or ICE candidate
+  timestamp: string; // When signal was sent
 }
 
 // Room creation request/response
@@ -110,22 +110,22 @@ export interface JoinVideoRoomResponseDto {
 
 // Guest link generation response
 export interface GenerateGuestLinkResponseDto {
-  guestCode: string;           // 8-character code
-  accessUrl: string;            // Full URL
-  expiresIn: number;            // Hours until expiry (default: 24)
-  maxUses: number;             // Max times link can be used
-  currentUses: number;          // How many times used
+  guestCode: string; // 8-character code
+  accessUrl: string; // Full URL
+  expiresIn: number; // Hours until expiry (default: 24)
+  maxUses: number; // Max times link can be used
+  currentUses: number; // How many times used
 }
 
 // Room end response
 export interface EndVideoRoomResponseDto {
   roomId: string;
   endedAt: string;
-  participantCount: number;     // How many participants attended
-  duration: number;             // Call duration in seconds
-  recordingUrl?: string;        // URL to call recording if enabled
+  participantCount: number; // How many participants attended
+  duration: number; // Call duration in seconds
+  recordingUrl?: string; // URL to call recording if enabled
   participantSummary: {
-    totalDuration: number;        // Total minutes per participant
+    totalDuration: number; // Total minutes per participant
     joinedAt: string;
     leftAt: string;
   }[];
@@ -159,7 +159,7 @@ export interface ChatAttachmentDto {
 }
 
 // Real-time room events (WebSocket)
-export type RoomEventType = 
+export type RoomEventType =
   | 'participant-joined'
   | 'participant-left'
   | 'participant-audio-toggled'
@@ -175,7 +175,7 @@ export interface RoomEventDto {
   type: RoomEventType;
   roomId: string;
   participantId?: string;
-  data: any;                  // Event-specific data
+  data: Record<string, unknown>; // Event-specific data
   timestamp: string;
 }
 
@@ -190,8 +190,8 @@ export interface ScreenShareConfigDto {
 // Recording configuration
 export interface RecordingConfigDto {
   enabled: boolean;
-  autoRecord: boolean;         // Start recording automatically
-  maxDuration: number;         // Maximum minutes
+  autoRecord: boolean; // Start recording automatically
+  maxDuration: number; // Maximum minutes
   storageLocation: 'cloud' | 'local';
 }
 
@@ -203,7 +203,7 @@ export interface CallQualityMetricsDto {
   videoBitrate: number;
   packetLoss: number;
   latency: number;
-  connectionStability: number;  // 0-100 score
+  connectionStability: number; // 0-100 score
   timestamp: string;
 }
 

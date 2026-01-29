@@ -1,18 +1,18 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { computed, Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import {
-  LoginDto,
-  SignupDto,
+import type {
   AuthResponseDto,
-  PerfilResponseDto,
   BackendPerfilResponseDto,
-  ForgotPasswordDto,
-  ResetPasswordDto,
   ChangePasswordDto,
-  MensajeResponseDto,
   EnfermedadPaciente,
+  ForgotPasswordDto,
+  LoginDto,
+  MensajeResponseDto,
+  PerfilResponseDto,
+  ResetPasswordDto,
+  SignupDto,
 } from '../models';
 
 @Injectable({
@@ -35,10 +35,6 @@ export class AuthService {
   readonly user = this.userSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.tokenSignal() && !!this.userSignal());
-
-  constructor() {
-    // Constructor vacío - la inicialización se hace en initialize()
-  }
 
   // ==========================================
   // App Initialization (called by APP_INITIALIZER)
@@ -64,7 +60,7 @@ export class AuthService {
     this.loadingSignal.set(true);
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponseDto>(`${this.API_URL}/login`, credentials),
+        this.http.post<AuthResponseDto>(`${this.API_URL}/login`, credentials)
       );
 
       const token = response.data.token;
@@ -103,7 +99,7 @@ export class AuthService {
     this.loadingSignal.set(true);
     try {
       return await firstValueFrom(
-        this.http.post<MensajeResponseDto>(`${this.API_URL}/olvide-password`, data),
+        this.http.post<MensajeResponseDto>(`${this.API_URL}/olvide-password`, data)
       );
     } finally {
       this.loadingSignal.set(false);
@@ -114,7 +110,7 @@ export class AuthService {
     this.loadingSignal.set(true);
     try {
       return await firstValueFrom(
-        this.http.post<MensajeResponseDto>(`${this.API_URL}/recuperar-password/${token}`, data),
+        this.http.post<MensajeResponseDto>(`${this.API_URL}/recuperar-password/${token}`, data)
       );
     } finally {
       this.loadingSignal.set(false);
@@ -125,7 +121,7 @@ export class AuthService {
     this.loadingSignal.set(true);
     try {
       return await firstValueFrom(
-        this.http.post<MensajeResponseDto>(`${this.API_URL}/cambiarPass`, data),
+        this.http.post<MensajeResponseDto>(`${this.API_URL}/cambiarPass`, data)
       );
     } finally {
       this.loadingSignal.set(false);
@@ -143,13 +139,13 @@ export class AuthService {
 
     try {
       const backendResponse = await firstValueFrom(
-        this.http.get<BackendPerfilResponseDto>(`${this.API_URL}/perfil`),
+        this.http.get<BackendPerfilResponseDto>(`${this.API_URL}/perfil`)
       );
 
       // Mapear enfermedades del backend al formato del frontend
       const enfermedadesMap = backendResponse.data.perfiles.paciente?.enfermedades || {};
       const enfermedades: EnfermedadPaciente[] = Object.entries(enfermedadesMap).map(
-        ([nombre, tipo]) => ({ nombre, tipo }),
+        ([nombre, tipo]) => ({ nombre, tipo })
       );
       // Mapear la respuesta del backend al formato del frontend
       const profile: PerfilResponseDto = {
