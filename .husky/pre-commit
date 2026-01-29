@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
 
-# Run GGA (Gentleman Guardian Angel) for code review
-echo "🤖 Running GGA code review..."
-gga run || {
-  echo "❌ GGA review failed. Commit aborted."
+echo "🔍 Running Biome code review..."
+
+# Run Biome check and auto-fix issues
+npx @biomejs/biome check --write --no-errors-on-unmatched . || {
+  echo "❌ Biome check failed. Please fix the issues above."
+  echo "💡 You can run 'npm run check' to fix issues automatically."
   exit 1
 }
 
-echo "✅ GGA review passed!"
+echo "✅ Biome check passed!"
