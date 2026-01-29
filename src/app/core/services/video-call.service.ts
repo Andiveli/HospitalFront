@@ -1,23 +1,23 @@
-import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  WebRtcConfigDto,
-  VideoRoomSessionDto,
-  ParticipantInfoDto,
-  WebRtcSignalDto,
-  ChatMessageDto,
-  RoomEventDto,
-  GenerateGuestLinkResponseDto,
-  GuestValidationDto,
-  GenerarInvitacionDto,
-  InvitacionResponseDto,
-  ParticipantRole,
-  SignalType,
-  RoomEventType,
-} from '../models/video-call.models';
-import { Observable, Subject, BehaviorSubject, timer } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, timer } from 'rxjs';
 import { catchError, take, timeout } from 'rxjs/operators';
+import {
+  type ChatMessageDto,
+  type GenerarInvitacionDto,
+  type GenerateGuestLinkResponseDto,
+  type GuestValidationDto,
+  type InvitacionResponseDto,
+  type ParticipantInfoDto,
+  ParticipantRole,
+  type RoomEventDto,
+  RoomEventType,
+  type SignalType,
+  type VideoRoomSessionDto,
+  WebRtcConfigDto,
+  type WebRtcSignalDto,
+} from '../models/video-call.models';
 
 export interface WebRTCServiceConfig {
   iceServers?: RTCIceServer[];
@@ -46,7 +46,7 @@ export class VideoCallService {
   isScreenSharing = signal(false);
   isRecording = signal(false);
   connectionState = signal<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>(
-    'disconnected',
+    'disconnected'
   );
   error = signal<string | null>(null);
 
@@ -219,13 +219,13 @@ export class VideoCallService {
    */
   async generateGuestLink(
     citaId: number,
-    guestData: GenerarInvitacionDto,
+    guestData: GenerarInvitacionDto
   ): Promise<GenerateGuestLinkResponseDto> {
     try {
       const response = await this.http
         .post<GenerateGuestLinkResponseDto>(
           `${this.apiUrl}/video-rooms/${citaId}/guest-link`,
-          guestData,
+          guestData
         )
         .toPromise();
 
@@ -241,13 +241,13 @@ export class VideoCallService {
    */
   async createInvitation(
     citaId: number,
-    guestData: GenerarInvitacionDto,
+    guestData: GenerarInvitacionDto
   ): Promise<InvitacionResponseDto> {
     try {
       const response = await this.http
         .post<InvitacionResponseDto>(
           `${this.apiUrl}/invitaciones/${citaId}/generar-link-invitado`,
-          guestData,
+          guestData
         )
         .toPromise();
 
@@ -521,7 +521,7 @@ export class VideoCallService {
 
   private async handleOffer(
     offer: RTCSessionDescriptionInit,
-    fromParticipantId: string,
+    fromParticipantId: string
   ): Promise<void> {
     const pc = this.getOrCreatePeerConnection(fromParticipantId);
     await pc.setRemoteDescription(offer);
@@ -534,7 +534,7 @@ export class VideoCallService {
 
   private async handleAnswer(
     answer: RTCSessionDescriptionInit,
-    fromParticipantId: string,
+    fromParticipantId: string
   ): Promise<void> {
     const pc = this.peerConnections.get(fromParticipantId);
     if (pc) {
@@ -544,7 +544,7 @@ export class VideoCallService {
 
   private async handleIceCandidate(
     candidate: RTCIceCandidateInit,
-    fromParticipantId: string,
+    fromParticipantId: string
   ): Promise<void> {
     const pc = this.peerConnections.get(fromParticipantId);
     if (pc && pc.remoteDescription) {
@@ -687,4 +687,3 @@ export class VideoCallService {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 }
-

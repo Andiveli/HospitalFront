@@ -1,8 +1,11 @@
-import { Component, signal, inject, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  GenerarInvitacionDto,
+  type GuestValidationDto,
+} from '../../../core/models/video-call.models';
 import { VideoCallService } from '../../../core/services/video-call.service';
-import { GuestValidationDto, GenerarInvitacionDto } from '../../../core/models/video-call.models';
 
 @Component({
   selector: 'app-sala-espera-invitado',
@@ -233,4 +236,3 @@ export class SalaEsperaInvitadoComponent {
       });
   }
 }
-

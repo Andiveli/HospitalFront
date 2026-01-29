@@ -1,12 +1,12 @@
-import { Component, signal, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { type CitaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
 import { CitasService } from '../../../core/services/citas.service';
-import { CitaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
 import {
-  isAppointmentTimeReady,
-  hasAppointmentExpired,
   getTimeUntilReady,
+  hasAppointmentExpired,
+  isAppointmentTimeReady,
 } from '../../../core/utils/appointment-time.utils';
 
 @Component({

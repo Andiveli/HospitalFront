@@ -1,9 +1,9 @@
-import { Component, signal, inject, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { VideoCallService } from '../../../core/services/video-call.service';
-import { CitaResponseDto } from '../../../core/models/citas.models';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import type { CitaResponseDto } from '../../../core/models/citas.models';
 import { CitasService } from '../../../core/services/citas.service';
+import { VideoCallService } from '../../../core/services/video-call.service';
 
 @Component({
   selector: 'app-sala-espera-paciente',
@@ -231,4 +231,3 @@ export class SalaEsperaPacienteComponent {
     this.error.set(null);
   }
 }
-

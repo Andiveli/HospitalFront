@@ -1,24 +1,27 @@
+import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
-  signal,
+  effect,
   inject,
   input,
+  signal,
   viewChild,
-  effect,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { CitasService } from '../../../core/services/citas.service';
-import { CitaDetalladaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
-import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/edit-cita-modal.component';
 import {
-  isAppointmentTimeReady,
-  hasAppointmentExpired,
-  getTimeUntilReady,
-} from '../../../core/utils/appointment-time.utils';
+  type CitaDetalladaResponseDto,
+  formatMedicoNombreSimplificado,
+} from '../../../core/models';
+import type { GenerarInvitacionDto } from '../../../core/models/video-call.models';
+import { CitasService } from '../../../core/services/citas.service';
 import { VideoCallService } from '../../../core/services/video-call.service';
-import { GenerarInvitacionDto } from '../../../core/models/video-call.models';
+import {
+  getTimeUntilReady,
+  hasAppointmentExpired,
+  isAppointmentTimeReady,
+} from '../../../core/utils/appointment-time.utils';
+import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/edit-cita-modal.component';
 
 @Component({
   selector: 'app-detalle-cita',

@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { MedicosService } from '../../core/services/medicos.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-debug',
@@ -182,7 +182,9 @@ export default class DebugComponent {
     this.reloadResult.set(null);
     try {
       await this.authService.loadUserProfile();
-      this.reloadResult.set('✅ Perfil recargado. isAuthenticated: ' + this.authService.isAuthenticated());
+      this.reloadResult.set(
+        '✅ Perfil recargado. isAuthenticated: ' + this.authService.isAuthenticated()
+      );
     } catch (error: any) {
       this.reloadResult.set('❌ Error: ' + (error?.message || 'Unknown'));
     } finally {

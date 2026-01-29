@@ -1,14 +1,14 @@
-import { Component, signal, inject, output, input, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CitasService } from '../../../core/services/citas.service';
-import { MedicosService } from '../../../core/services/medicos.service';
-import {
+import type {
   CitaDetalladaResponseDto,
-  UpdateCitaDto,
   DisponibilidadResponseDto,
   SlotDisponibleDto,
+  UpdateCitaDto,
 } from '../../../core/models';
+import { CitasService } from '../../../core/services/citas.service';
+import { MedicosService } from '../../../core/services/medicos.service';
 
 @Component({
   selector: 'app-edit-cita-modal',

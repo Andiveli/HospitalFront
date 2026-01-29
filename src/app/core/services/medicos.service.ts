@@ -1,13 +1,13 @@
-import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import {
-  MedicoDisponibleDto,
+import { environment } from '../../../environments/environment';
+import type {
   BackendMedicosResponseDto,
   DiasAtencionApiResponseDto,
   DisponibilidadResponseDto,
+  MedicoDisponibleDto,
 } from '../models';
-import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +27,7 @@ export class MedicosService {
     }
 
     const response = await firstValueFrom(
-      this.http.get<BackendMedicosResponseDto>(this.baseUrl, { params }),
+      this.http.get<BackendMedicosResponseDto>(this.baseUrl, { params })
     );
 
     return response.data || [];
@@ -41,7 +41,7 @@ export class MedicosService {
   async getDiasAtencion(medicoId: number): Promise<number[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<DiasAtencionApiResponseDto>(`${this.baseUrl}/${medicoId}/dias-atencion`),
+        this.http.get<DiasAtencionApiResponseDto>(`${this.baseUrl}/${medicoId}/dias-atencion`)
       );
 
       const diasStrings = response.data.diasAtencion;
@@ -87,8 +87,8 @@ export class MedicosService {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: DisponibilidadResponseDto }>(
           `${this.baseUrl}/${medicoId}/disponibilidad`,
-          { params },
-        ),
+          { params }
+        )
       );
 
       // Unwrap { message, data } response and return the data object

@@ -1,0 +1,35 @@
+// Test simple para debug de tiempo en el navegador
+// Abrir: http://localhost:4200/debug-time.html
+
+console.log('=== Testing Appointment Time Logic ===');
+
+// Test 1: Cita en 3 minutos (debería estar ready)
+const cita3Minutos = new Date(Date.now() + 3 * 60 * 1000);
+console.log('Cita en 3 minutos:', cita3Minutos);
+console.log('¿Lista para sala?', shouldShowButton(cita3Minutos));
+
+// Test 2: Cita en 5 minutos exactos (debería estar ready)
+const cita5Minutos = new Date(Date.now() + 5 * 60 * 1000);
+console.log('Cita en 5 minutos:', cita5Minutos);
+console.log('¿Lista para sala?', shouldShowButton(cita5Minutos));
+
+// Test 3: Cita en 10 minutos (no debería estar ready)
+const cita10Minutos = new Date(Date.now() + 10 * 60 * 1000);
+console.log('Cita en 10 minutos:', cita10Minutos);
+console.log('¿Lista para sala?', shouldShowButton(cita10Minutos));
+
+// Helper function
+function shouldShowButton(appointmentDateTime) {
+  const now = new Date();
+  const appointmentTime = new Date(appointmentDateTime);
+  const fiveMinutesBefore = new Date(appointmentTime.getTime() - 5 * 60 * 1000);
+  const isReady = now >= fiveMinutesBefore && now < appointmentTime;
+  
+  console.log('Now:', now);
+  console.log('Appointment Time:', appointmentTime);
+  console.log('5 min before:', fiveMinutesBefore);
+  console.log('Is Ready:', isReady);
+  console.log('---');
+  
+  return isReady;
+}

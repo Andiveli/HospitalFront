@@ -1,15 +1,15 @@
-import { Component, signal, computed, effect, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MedicosService } from '../../../core/services/medicos.service';
-import { CitasService } from '../../../core/services/citas.service';
+import { Router } from '@angular/router';
 import {
-  MedicoDisponibleDto,
-  SlotDisponibleDto,
-  EspecialidadDto,
+  type EspecialidadDto,
   formatMedicoNombre,
+  type MedicoDisponibleDto,
+  type SlotDisponibleDto,
 } from '../../../core/models';
+import { CitasService } from '../../../core/services/citas.service';
+import { MedicosService } from '../../../core/services/medicos.service';
 
 // Stepper state type
 type Step = 1 | 2 | 3;
@@ -206,7 +206,7 @@ export default class AgendarCitaComponent {
       if (!disponibilidad.atiende) {
         this.availableSlots.set([]);
         this.error.set(
-          disponibilidad.mensaje || 'El médico no atiende este día. Selecciona otra fecha.',
+          disponibilidad.mensaje || 'El médico no atiende este día. Selecciona otra fecha.'
         );
         return;
       }
@@ -235,7 +235,7 @@ export default class AgendarCitaComponent {
       if (filteredSlots.length === 0) {
         if (disponibilidad.slots.length === 0) {
           this.error.set(
-            'No hay horarios disponibles para esta fecha. Todos los turnos están ocupados.',
+            'No hay horarios disponibles para esta fecha. Todos los turnos están ocupados.'
           );
         } else {
           this.error.set('No hay horarios disponibles. Todos los turnos de hoy ya pasaron.');

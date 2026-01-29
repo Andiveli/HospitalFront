@@ -1,15 +1,15 @@
-import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
-import {
-  CitaResponseDto,
-  CitaDetalladaResponseDto,
-  CreateCitaDto,
-  UpdateCitaDto,
-  PaginationParams,
-  PaginatedResponse,
-} from '../models';
+import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import type {
+  CitaDetalladaResponseDto,
+  CitaResponseDto,
+  CreateCitaDto,
+  PaginatedResponse,
+  PaginationParams,
+  UpdateCitaDto,
+} from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +25,7 @@ export class CitasService {
   /**
    * Get next 3 upcoming appointments
    * GET /citas/proximas
-   * 
+   *
    * Backend returns: { message: string, data: CitaResponseDto[] }
    */
   async getProximasCitas(): Promise<CitaResponseDto[]> {
@@ -42,7 +42,7 @@ export class CitasService {
   /**
    * Get last 4 attended appointments
    * GET /citas/recientes
-   * 
+   *
    * Backend returns: { message: string, data: CitaResponseDto[] }
    */
   async getRecientesCitas(): Promise<CitaResponseDto[]> {
@@ -60,18 +60,15 @@ export class CitasService {
    * Get all pending appointments (paginated)
    * GET /citas/pendientes?page=1&limit=10
    */
-  async getPendientesCitas(
-    params: PaginationParams
-  ): Promise<PaginatedResponse<CitaResponseDto>> {
+  async getPendientesCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
     const httpParams = new HttpParams()
       .set('page', params.page.toString())
       .set('limit', params.limit.toString());
 
     return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(
-        `${this.baseUrl}/pendientes`,
-        { params: httpParams }
-      )
+      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/pendientes`, {
+        params: httpParams,
+      })
     );
   }
 
@@ -79,25 +76,22 @@ export class CitasService {
    * Get all attended appointments (paginated)
    * GET /citas/atendidas?page=1&limit=10
    */
-  async getAtendidasCitas(
-    params: PaginationParams
-  ): Promise<PaginatedResponse<CitaResponseDto>> {
+  async getAtendidasCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
     const httpParams = new HttpParams()
       .set('page', params.page.toString())
       .set('limit', params.limit.toString());
 
     return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(
-        `${this.baseUrl}/atendidas`,
-        { params: httpParams }
-      )
+      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/atendidas`, {
+        params: httpParams,
+      })
     );
   }
 
   /**
    * Get appointment details (includes diagnosis, prescriptions, referrals)
    * GET /citas/{id}
-   * 
+   *
    * Backend returns: { message: string, data: CitaDetalladaResponseDto }
    */
   async getCitaDetalle(id: number): Promise<CitaDetalladaResponseDto> {
@@ -114,16 +108,14 @@ export class CitasService {
   /**
    * Create a new appointment
    * POST /citas
-   * 
+   *
    * Requirements:
    * - medicoId: number
    * - fechaHoraInicio: ISO 8601 string
    * - telefonica: boolean
    */
   async createCita(dto: CreateCitaDto): Promise<CitaResponseDto> {
-    return firstValueFrom(
-      this.http.post<CitaResponseDto>(this.baseUrl, dto)
-    );
+    return firstValueFrom(this.http.post<CitaResponseDto>(this.baseUrl, dto));
   }
 
   // =====================================
@@ -133,15 +125,13 @@ export class CitasService {
   /**
    * Update an existing appointment
    * PUT /citas/{id}
-   * 
+   *
    * Restrictions:
    * - Only pending appointments can be updated
    * - Must be 72+ hours in advance
    */
   async updateCita(id: number, dto: UpdateCitaDto): Promise<CitaResponseDto> {
-    return firstValueFrom(
-      this.http.put<CitaResponseDto>(`${this.baseUrl}/${id}`, dto)
-    );
+    return firstValueFrom(this.http.put<CitaResponseDto>(`${this.baseUrl}/${id}`, dto));
   }
 
   // =====================================
@@ -151,15 +141,13 @@ export class CitasService {
   /**
    * Cancel an appointment
    * DELETE /citas/{id}
-   * 
+   *
    * Restrictions:
    * - Only pending appointments can be cancelled
    * - Must be 72+ hours in advance
    */
   async cancelCita(id: number): Promise<{ message: string }> {
-    return firstValueFrom(
-      this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`)
-    );
+    return firstValueFrom(this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`));
   }
 
   // =====================================

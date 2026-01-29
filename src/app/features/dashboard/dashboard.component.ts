@@ -1,17 +1,17 @@
+import { DatePipe } from '@angular/common';
 import {
-  Component,
   ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
   inject,
   signal,
-  computed,
-  effect,
-  DestroyRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import type { CitaResponseDto } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { CitasService } from '../../core/services/citas.service';
-import { CitaResponseDto } from '../../core/models';
-import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',

@@ -1,14 +1,14 @@
-import { Component, signal, inject, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { VideoCallService } from '../../../core/services/video-call.service';
-import {
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
+import type {
   ChatMessageDto,
   ParticipantInfoDto,
   ParticipantRole,
 } from '../../../core/models/video-call.models';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { VideoCallService } from '../../../core/services/video-call.service';
 
 @Component({
   selector: 'app-sala-videollamada',
@@ -208,7 +208,7 @@ export class SalaVideollamadaComponent {
   markMessageAsRead(messageId: string): void {
     const currentMessages = this.chatMessages();
     const updatedMessages = currentMessages.map((msg) =>
-      msg.id === messageId ? { ...msg, isRead: true } : msg,
+      msg.id === messageId ? { ...msg, isRead: true } : msg
     );
     this.chatMessages.set(updatedMessages);
   }
@@ -262,7 +262,7 @@ export class SalaVideollamadaComponent {
   private updateParticipantSpeakingStatus(participantId: string, isSpeaking: boolean): void {
     const currentParticipants = this.participants();
     const updatedParticipants = currentParticipants.map((p: ParticipantInfoDto) =>
-      p.id === participantId ? { ...p, isSpeaking } : p,
+      p.id === participantId ? { ...p, isSpeaking } : p
     );
     // Note: In a real implementation, this would update participants through the service
     console.log('Updating speaking status:', { participantId, isSpeaking });
@@ -287,7 +287,7 @@ export class SalaVideollamadaComponent {
       isAudioEnabled: false,
       isSpeaking: false,
       joinedAt: message.timestamp,
-      mediaStream: undefined
+      mediaStream: undefined,
     };
     return this.getParticipantAvatar(participant);
   }
@@ -345,4 +345,3 @@ export class SalaVideollamadaComponent {
     this.error.set(null);
   }
 }
-
