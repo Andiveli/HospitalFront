@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -160,6 +161,35 @@ import { AuthService } from '../../core/services/auth.service';
         </form>
       </section>
 
+      <!-- Cambio de Layout Section (solo para usuarios con ambos roles) -->
+      @if (hasBothRoles()) {
+        <section>
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">Cambiar Vista</h2>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              (click)="switchLayout()"
+              class="px-6 py-2 border-2 border-emerald-600 rounded-lg font-medium text-emerald-600 hover:bg-emerald-50 transition"
+            >
+              <span class="flex items-center gap-2">
+                @if (isDoctor()) {
+                  <!-- Icono de paciente -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                } @else {
+                  <!-- Icono de médico -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                }
+                {{ switchLabel() }}
+              </span>
+            </button>
+          </div>
+        </section>
+      }
+
       <!-- Cuenta Section -->
       <section>
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Cuenta</h2>
@@ -179,6 +209,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class AjustesComponent {
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -188,6 +219,12 @@ export class AjustesComponent {
   readonly showCurrentPassword = signal(false);
   readonly showNewPassword = signal(false);
   readonly showConfirmPassword = signal(false);
+
+  // Computed properties for role switching
+  readonly isDoctor = this.authService.isDoctor;
+  readonly isPatient = this.authService.isPatient;
+  readonly hasBothRoles = computed(() => this.isDoctor() && this.isPatient());
+  readonly currentRoute = computed(() => this.router.url);
 
   readonly passwordForm = this.fb.nonNullable.group({
     passwordActual: ['', [Validators.required]],
@@ -230,4 +267,37 @@ export class AjustesComponent {
   async logout(): Promise<void> {
     await this.authService.logout();
   }
+
+  /**
+   * Switch between doctor and patient layouts
+   */
+  async switchLayout(): Promise<void> {
+    if (this.isDoctor()) {
+      // Switch to patient layout
+      await this.router.navigate(['/dashboard']);
+    } else {
+      // Switch to doctor layout
+      await this.router.navigate(['/doctor/dashboard']);
+    }
+  }
+
+  /**
+   * Get label for the switch button
+   */
+  readonly switchLabel = computed(() => {
+    if (this.isDoctor()) {
+      return 'Ver como Paciente';
+    }
+    return 'Ver como Médico';
+  });
+
+  /**
+   * Get icon for the switch button
+   */
+  readonly switchIcon = computed(() => {
+    if (this.isDoctor()) {
+      return 'user'; // Patient icon
+    }
+    return 'stethoscope'; // Doctor icon (fallback)
+  });
 }

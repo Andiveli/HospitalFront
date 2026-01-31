@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -47,7 +52,8 @@ export class LoginComponent {
         message = error.message;
       } else if (error?.status === 0) {
         // Error de conexión
-        message = 'No se puede conectar al servidor. Verificá que el backend esté corriendo.';
+        message =
+          'No se puede conectar al servidor. Verificá que el backend esté corriendo.';
       }
 
       this.errorMessage.set(message);

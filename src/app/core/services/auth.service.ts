@@ -35,6 +35,8 @@ export class AuthService {
   readonly user = this.userSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.tokenSignal() && !!this.userSignal());
+  readonly isDoctor = computed(() => this.user()?.roles.includes('doctor') || this.user()?.roles.includes('medico'));
+  readonly isPatient = computed(() => this.user()?.roles.includes('patient') || this.user()?.roles.includes('paciente'));
 
   // ==========================================
   // App Initialization (called by APP_INITIALIZER)
@@ -68,7 +70,7 @@ export class AuthService {
 
       await this.loadUserProfile();
 
-      await this.router.navigate(['/dashboard']);
+      await this.redirectToDashboard();
     } catch (error) {
       this.clearAuth();
       throw error;
@@ -201,5 +203,24 @@ export class AuthService {
 
   getToken(): string | null {
     return this.tokenSignal();
+  }
+
+  // ==========================================
+  // Role-based Navigation
+  // ==========================================
+
+  /**
+   * Redirect user based on their role priority
+   * Doctor role takes precedence over patient role
+   */
+  async redirectToDashboard(): Promise<void> {
+    if (this.isDoctor()) {
+      await this.router.navigate(['/doctor/dashboard']);
+    } else if (this.isPatient()) {
+      await this.router.navigate(['/dashboard']);
+    } else {
+      // Fallback to login if no valid role
+      await this.router.navigate(['/auth/login']);
+    }
   }
 }

@@ -28,6 +28,41 @@ export interface SignupDto {
   genero: number; // 1 = Masculino, 2 = Femenino, 3 = Otro
 }
 
+// Horario del médico en /auth/perfil
+export interface MedicoHorarioDto {
+  dia: string; // "Lunes", "Martes", etc.
+  horaInicio: string; // "08:00:00"
+  horaFin: string; // "16:00:00"
+}
+
+// Especialidad del médico
+export interface MedicoEspecialidadDto {
+  nombre: string;
+  descripcion?: string;
+  principal?: boolean;
+}
+
+// Datos del médico (nested en data.perfiles.medico.data)
+export interface MedicoDataDto {
+  nombreCompleto: string;
+  email: string;
+  cedula: string;
+  licenciaMedica: string;
+  pasaporte?: string;
+  telefono?: string;
+  genero?: string;
+  fotoPerfil?: string;
+  especialidades: MedicoEspecialidadDto[];
+  horarios: MedicoHorarioDto[];
+  citasAtendidas: number;
+}
+
+// Wrapper del médico (message + data)
+export interface MedicoProfileWrapperDto {
+  message: string;
+  data: MedicoDataDto;
+}
+
 // Perfil Response (lo que realmente devuelve el backend)
 export interface BackendPerfilResponseDto {
   message: string;
@@ -37,10 +72,10 @@ export interface BackendPerfilResponseDto {
     roles: string[];
     perfiles: {
       paciente?: {
-        cedula: string;
         nombres: string;
         edad: number;
         email: string;
+        cedula: string;
         telefono: string;
         pais: string;
         genero: string;
@@ -50,6 +85,7 @@ export interface BackendPerfilResponseDto {
         imagen: string | null;
         enfermedades: Record<string, string>;
       };
+      medico?: MedicoProfileWrapperDto; // Es un wrapper con message y data
     };
   };
 }

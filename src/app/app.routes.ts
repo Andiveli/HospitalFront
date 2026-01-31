@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, doctorGuard, patientGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // ==========================================
@@ -46,7 +46,76 @@ export const routes: Routes = [
   },
 
   // ==========================================
-  // Rutas Protegidas - Con Layout de Paciente
+  // Rutas Protegidas - Con Layout de Médico (Prioridad sobre paciente)
+  // ==========================================
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/shared/layouts/doctor-layout.component').then(
+        (m) => m.DoctorLayoutComponent
+      ),
+    canActivate: [authGuard, doctorGuard],
+    children: [
+      {
+        path: 'doctor/dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+        title: 'Inicio - Portal Médico',
+      },
+      {
+        path: 'doctor/consultas',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/citas/lista/lista-citas.component'),
+            title: 'Mis Consultas - Portal Médico',
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/citas/detalle/detalle-cita.component').then((m) => m.default),
+            title: 'Detalle de Consulta - Portal Médico',
+          },
+        ],
+      },
+      {
+        path: 'doctor/profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+        title: 'Perfil Profesional - Portal Médico',
+      },
+      {
+        path: 'doctor/ajustes',
+        loadComponent: () =>
+          import('./features/ajustes/ajustes.component').then((m) => m.AjustesComponent),
+        title: 'Ajustes - Portal Médico',
+      },
+      {
+        path: 'sala-espera/:id',
+        loadComponent: () =>
+          import('./features/video-call/sala-espera-paciente/sala-espera-paciente.component').then(
+            (m) => m.SalaEsperaPacienteComponent
+          ),
+        title: 'Sala de Espera - Portal Médico',
+      },
+      {
+        path: 'sala-espera-invitado/:code',
+        loadComponent: () =>
+          import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(
+            (m) => m.SalaEsperaInvitadoComponent
+          ),
+        title: 'Sala de Espera Invitado - Portal Médico',
+      },
+      {
+        path: '',
+        redirectTo: 'doctor/dashboard',
+        pathMatch: 'full',
+      },
+    ],
+  },
+
+  // ==========================================
+  // Rutas Protegidas - Con Layout de Paciente (Fallback)
   // ==========================================
   {
     path: '',
@@ -54,7 +123,7 @@ export const routes: Routes = [
       import('./features/shared/layouts/patient-layout.component').then(
         (m) => m.PatientLayoutComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, patientGuard],
     children: [
       {
         path: 'dashboard',
