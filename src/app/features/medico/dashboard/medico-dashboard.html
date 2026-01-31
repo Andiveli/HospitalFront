@@ -1,0 +1,170 @@
+<div class="p-8">
+  <!-- Header -->
+  <div
+    class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
+  >
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">
+        Bienvenida, {{ nombreDoctor() }}
+      </h1>
+      <p class="text-slate-600 mt-1">¿Cómo podemos ayudarte hoy?</p>
+    </div>
+
+    <!-- Consultas Atendidas -->
+    <div
+      class="bg-white rounded-xl border border-slate-300 p-4 shadow-sm flex items-center gap-4"
+    >
+      <div class="text-center">
+        <p class="text-sm text-slate-500">Consultas</p>
+        <p class="text-sm text-slate-500">Atendidas</p>
+      </div>
+      <p class="text-4xl font-bold text-slate-800">{{ citasAtendidas() }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <div class="flex justify-center py-20">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+    ></div>
+  </div>
+  } @else {
+  <!-- Próxima Consulta -->
+  @if (proximaConsulta(); as cita) {
+  <div class="bg-white rounded-xl border border-slate-300 p-6 shadow-sm mb-8">
+    <div class="flex items-center gap-2 mb-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 text-slate-600"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+      <h2 class="text-lg font-semibold text-slate-800">Próxima Consulta</h2>
+    </div>
+
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center text-slate-600"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-slate-800">{{ nombrePaciente(cita) }}</p>
+          <p class="text-sm text-slate-500">
+            {{ cita.telefonica ? 'Virtual' : 'Presencial' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="hidden md:block w-px h-12 bg-slate-300"></div>
+
+      <div class="text-center md:text-left">
+        <p class="font-medium text-slate-700">
+          {{ formatearFecha(cita.fechaHoraInicio) }}
+        </p>
+        <p class="text-sm text-slate-500">
+          {{ formatearHora(cita.fechaHoraInicio) }}h
+        </p>
+      </div>
+
+      <div class="flex-1 flex justify-end">
+        @if (puedeIngresar(cita)) {
+        <button
+          [routerLink]="['/sala-espera', cita.id]"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+        >
+          Ingresar →
+        </button>
+        } @else {
+        <button
+          disabled
+          class="px-6 py-2 bg-slate-200 text-slate-400 rounded-lg font-medium cursor-not-allowed"
+        >
+          Ingresar
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Consultas -->
+  <div
+    class="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden"
+  >
+    <div class="p-5 border-b border-slate-300">
+      <h2 class="text-xl font-semibold text-slate-800">
+        {{ tieneConsultasHoy() ? 'Consultas para Hoy' : 'Próximas Consultas' }}
+      </h2>
+    </div>
+
+    <div class="p-5">
+      @if (consultasParaMostrar(); as consultas) { @if (consultas.length > 0) {
+      <div class="border border-slate-300 rounded-lg overflow-hidden">
+        <table class="w-full">
+          <tbody class="divide-y divide-slate-300">
+            @for (cita of consultas; track cita.id) {
+            <tr class="hover:bg-slate-50">
+              <!-- Si es 'Próximas Consultas', mostrar fecha + hora -->
+              @if (mostrandoProximasConsultas()) {
+              <td class="py-4 px-4 font-medium text-slate-700">
+                <div class="text-sm">
+                  {{ formatearFechaCorta(cita.fechaHoraInicio) }}
+                </div>
+                <div class="text-slate-500">
+                  {{ formatearHora(cita.fechaHoraInicio) }}
+                </div>
+              </td>
+              } @else {
+              <!-- Solo hora para 'Consultas para Hoy' -->
+              <td class="py-4 px-4 font-medium text-slate-700 w-24">
+                {{ formatearHora(cita.fechaHoraInicio) }}
+              </td>
+              }
+              <td class="py-4 px-4 text-slate-600">
+                {{ nombrePaciente(cita) }}
+              </td>
+              <td class="py-4 px-4 text-right">
+                <button
+                  [routerLink]="['/citas/medico', cita.id]"
+                  class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 font-medium"
+                >
+                  Detalles
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } @else {
+      <p class="text-center text-slate-500 py-6">
+        No hay consultas programadas
+      </p>
+      } }
+    </div>
+  </div>
+  }
+</div>

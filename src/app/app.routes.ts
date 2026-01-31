@@ -59,15 +59,20 @@ export const routes: Routes = [
       {
         path: 'doctor/dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/medico/dashboard/medico-dashboard.component').then(
+            (m) => m.MedicoDashboardComponent
+          ),
         title: 'Inicio - Portal Médico',
       },
       {
-        path: 'doctor/consultas',
+        path: 'citas/medico',
         children: [
           {
             path: '',
-            loadComponent: () => import('./features/citas/lista/lista-citas.component'),
+            loadComponent: () =>
+              import('./features/medico/mis-consultas/mis-consultas.component').then(
+                (m) => m.MisConsultasComponent
+              ),
             title: 'Mis Consultas - Portal Médico',
           },
           {

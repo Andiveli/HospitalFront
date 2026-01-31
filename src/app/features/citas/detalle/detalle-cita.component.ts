@@ -38,6 +38,11 @@ export default class DetalleCitaComponent {
   // Route param (id) - optional because it's loaded async
   id = input<string>();
 
+  // Check if we're in the medico route by checking the current URL
+  isMedicoRoute(): boolean {
+    return this.router.url.includes('/citas/medico');
+  }
+
   // Modal reference
   editModal = viewChild<EditCitaModalComponent>('editModal');
 
@@ -82,7 +87,10 @@ export default class DetalleCitaComponent {
         throw new Error('ID de cita inválido');
       }
 
-      const cita = await this.citasService.getCitaDetalle(citaId);
+      // Use medico endpoint if we're in the medico route, otherwise patient endpoint
+      const cita = this.isMedicoRoute()
+        ? await this.citasService.getCitaDetalleMedico(citaId)
+        : await this.citasService.getCitaDetalle(citaId);
       this.cita.set(cita);
     } catch (error: any) {
       console.error('Error loading appointment details:', error);

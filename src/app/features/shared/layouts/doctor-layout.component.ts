@@ -17,10 +17,8 @@ export class DoctorLayoutComponent {
 
   readonly menuItems = [
     { icon: 'grid', label: 'Inicio', route: '/doctor/dashboard' },
-    { icon: 'calendar', label: 'Mis Consultas', route: '/doctor/consultas' },
+    { icon: 'calendar', label: 'Mis Consultas', route: '/citas/medico' },
     { icon: 'user', label: 'Perfil Profesional', route: '/doctor/profile' },
     { icon: 'settings', label: 'Ajustes', route: '/doctor/ajustes' },
   ];
-
-
 }

@@ -23,15 +23,62 @@ export class CitasService {
   // =====================================
 
   /**
-   * Get next 3 upcoming appointments
+   * Get next 3 upcoming appointments (para pacientes)
    * GET /citas/proximas
-   *
-   * Backend returns: { message: string, data: CitaResponseDto[] }
    */
   async getProximasCitas(): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/proximas`)
+      );
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get next upcoming appointments for doctor (para médicos)
+   * GET /citas/medico/proximas
+   */
+  async getProximasCitasMedico(): Promise<CitaResponseDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(
+          `${this.baseUrl}/medico/proximas`
+        )
+      );
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get all appointments for doctor (para médicos)
+   * GET /citas/medico/all
+   */
+  async getAllCitasMedico(): Promise<CitaResponseDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/medico/all`)
+      );
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get appointments for doctor filtered by date (para médicos)
+   * GET /citas/medico/fecha?fecha=YYYY-MM-DD
+   */
+  async getCitasMedicoPorFecha(fecha: string): Promise<CitaResponseDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(
+          `${this.baseUrl}/medico/fecha?fecha=${fecha}`
+        )
       );
       return response.data || [];
     } catch {
@@ -89,14 +136,25 @@ export class CitasService {
   }
 
   /**
-   * Get appointment details (includes diagnosis, prescriptions, referrals)
+   * Get appointment details (para pacientes)
    * GET /citas/{id}
-   *
-   * Backend returns: { message: string, data: CitaDetalladaResponseDto }
    */
   async getCitaDetalle(id: number): Promise<CitaDetalladaResponseDto> {
     const response = await firstValueFrom(
       this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(`${this.baseUrl}/${id}`)
+    );
+    return response.data;
+  }
+
+  /**
+   * Get appointment details for doctor (para médicos)
+   * GET /citas/medico/{id}
+   */
+  async getCitaDetalleMedico(id: number): Promise<CitaDetalladaResponseDto> {
+    const response = await firstValueFrom(
+      this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(
+        `${this.baseUrl}/medico/${id}`
+      )
     );
     return response.data;
   }
