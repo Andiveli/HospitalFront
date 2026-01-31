@@ -81,7 +81,9 @@ export const routes: Routes = [
       {
         path: 'doctor/profile',
         loadComponent: () =>
-          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+          import('./features/medico/perfil-profesional/perfil-profesional.component').then(
+            (m) => m.PerfilProfesionalComponent
+          ),
         title: 'Perfil Profesional - Portal Médico',
       },
       {

@@ -9,6 +9,7 @@ import type {
   EnfermedadPaciente,
   ForgotPasswordDto,
   LoginDto,
+  MedicoProfileWrapperDto,
   MensajeResponseDto,
   PerfilResponseDto,
   ResetPasswordDto,
@@ -28,15 +29,22 @@ export class AuthService {
   // Signals para el estado de autenticación
   private readonly tokenSignal = signal<string | null>(this.getStoredToken());
   private readonly userSignal = signal<PerfilResponseDto | null>(null);
+  private readonly medicoProfileSignal = signal<MedicoProfileWrapperDto | null>(null);
   private readonly loadingSignal = signal<boolean>(false);
 
   // Computed signals (valores derivados)
   readonly token = this.tokenSignal.asReadonly();
   readonly user = this.userSignal.asReadonly();
+  readonly medicoProfile = this.medicoProfileSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.tokenSignal() && !!this.userSignal());
-  readonly isDoctor = computed(() => this.user()?.roles.includes('doctor') || this.user()?.roles.includes('medico'));
-  readonly isPatient = computed(() => this.user()?.roles.includes('patient') || this.user()?.roles.includes('paciente'));
+  readonly isDoctor = computed(
+    () => this.user()?.roles.includes('doctor') || this.user()?.roles.includes('medico')
+  );
+  readonly isPatient = computed(
+    () => this.user()?.roles.includes('patient') || this.user()?.roles.includes('paciente')
+  );
+  readonly hasBothRoles = computed(() => this.isDoctor() && this.isPatient());
 
   // ==========================================
   // App Initialization (called by APP_INITIALIZER)
@@ -149,25 +157,37 @@ export class AuthService {
       const enfermedades: EnfermedadPaciente[] = Object.entries(enfermedadesMap).map(
         ([nombre, tipo]) => ({ nombre, tipo })
       );
+
+      // Extraer datos del médico del wrapper
+      const medicoData = backendResponse.data.perfiles.medico?.data;
+
       // Mapear la respuesta del backend al formato del frontend
       const profile: PerfilResponseDto = {
         id: backendResponse.data.userId,
-        cedula: backendResponse.data.perfiles.paciente?.cedula,
+        cedula: backendResponse.data.perfiles.paciente?.cedula || medicoData?.cedula,
         email: backendResponse.data.email,
-        nombreCompleto: backendResponse.data.perfiles.paciente?.nombres.trim() || 'Usuario',
+        nombreCompleto:
+          backendResponse.data.perfiles.paciente?.nombres.trim() ||
+          medicoData?.nombreCompleto.trim() ||
+          'Usuario',
         roles: backendResponse.data.roles,
         edad: backendResponse.data.perfiles.paciente?.edad,
-        telefono: backendResponse.data.perfiles.paciente?.telefono,
+        telefono: backendResponse.data.perfiles.paciente?.telefono || medicoData?.telefono,
         pais: backendResponse.data.perfiles.paciente?.pais,
-        genero: backendResponse.data.perfiles.paciente?.genero,
+        genero: backendResponse.data.perfiles.paciente?.genero || medicoData?.genero,
         residencia: backendResponse.data.perfiles.paciente?.residencia,
         sangre: backendResponse.data.perfiles.paciente?.sangre,
         estilo: backendResponse.data.perfiles.paciente?.estilo,
-        imagen: backendResponse.data.perfiles.paciente?.imagen,
+        imagen: backendResponse.data.perfiles.paciente?.imagen || medicoData?.fotoPerfil,
         enfermedades,
       };
 
       this.userSignal.set(profile);
+
+      // Si tiene perfil de médico, almacenarlo
+      if (backendResponse.data.perfiles.medico) {
+        this.medicoProfileSignal.set(backendResponse.data.perfiles.medico);
+      }
     } catch (error) {
       // Si falla cargar el perfil, limpiar autenticación
       this.clearAuth();

@@ -1,11 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-echo "🔍 Running Biome critical checks..."
+# ======== GGA START ========
+# Gentleman Guardian Angel - Code Review
+gga run || exit 1
+# ======== GGA END ========
 
-# Just check for critical errors that would break the build
-npx @biomejs/biome check --max-diagnostics=10 . >/dev/null 2>&1 || {
-  echo "⚠️  Biome found some issues, but proceeding with commit."
-  echo "💡 Run 'npm run check' to fix all issues automatically."
-}
-
-echo "✅ Ready to commit!"

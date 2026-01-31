@@ -16,32 +16,32 @@ export const authGuard: CanActivateFn = () => {
 
 /**
  * Guard para rutas exclusivas de médicos
- * Solo permite acceso si el usuario tiene rol de médico
+ * Solo permite acceso si el usuario tiene rol de médico o ambos roles
  */
 export const doctorGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isDoctor()) {
+  if (authService.isDoctor() || authService.hasBothRoles()) {
     return true;
   }
 
-  // Si no es médico, redirigir al dashboard del paciente
+  // Si no es médico ni tiene ambos roles, redirigir al dashboard del paciente
   return router.createUrlTree(['/dashboard']);
 };
 
 /**
  * Guard para rutas exclusivas de pacientes
- * Solo permite acceso si el usuario tiene rol de paciente
+ * Solo permite acceso si el usuario tiene rol de paciente o ambos roles
  */
 export const patientGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isPatient()) {
+  if (authService.isPatient() || authService.hasBothRoles()) {
     return true;
   }
 
-  // Si no es paciente, redirigir al dashboard del médico
+  // Si no es paciente ni tiene ambos roles, redirigir al dashboard del médico
   return router.createUrlTree(['/doctor/dashboard']);
 };

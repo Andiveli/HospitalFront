@@ -17,7 +17,7 @@ export function isAppointmentTimeReady(appointmentDateTime: string): boolean {
 // Helper: Check if appointment has passed (including a grace period)
 export function hasAppointmentExpired(
   _appointmentDateTime: string,
-  appointmentEndTime: string
+  appointmentEndTime: string,
 ): boolean {
   const now = new Date();
   const endTime = new Date(appointmentEndTime);

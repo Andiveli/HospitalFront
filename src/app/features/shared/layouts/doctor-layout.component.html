@@ -28,7 +28,9 @@
     @if (user()) {
       <div class="p-4 border-b border-slate-200">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+          <div
+            class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center"
+          >
             @if (user()?.imagen) {
               <img
                 [src]="user()?.imagen"
@@ -52,7 +54,9 @@
             }
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-slate-900 truncate">{{ user()?.nombreCompleto }}</p>
+            <p class="text-sm font-medium text-slate-900 truncate">
+              {{ user()?.nombreCompleto }}
+            </p>
             <p class="text-xs text-emerald-600">Médico</p>
           </div>
         </div>
@@ -158,3 +162,4 @@
     <router-outlet />
   </main>
 </div>
+
