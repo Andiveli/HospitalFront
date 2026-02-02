@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { type CitaResponseDto, formatMedicoNombreSimplificado } from '../../../core/models';
-import { CitasService } from '../../../core/services/citas.service';
+import { type CitaResponseDto, formatMedicoNombreSimplificado } from '../../../../core/models';
+import { AuthService } from '../../../../core/services/auth.service';
+import { CitasService } from '../../../../core/services/citas.service';
+import { VideoCallService } from '../../../../core/services/video-call.service';
 import {
   getTimeUntilReady,
   hasAppointmentExpired,
   isAppointmentTimeReady,
-} from '../../../core/utils/appointment-time.utils';
+} from '../../../../core/utils/appointment-time.utils';
 
 @Component({
   selector: 'app-lista-citas',
@@ -16,7 +18,9 @@ import {
   styleUrl: './lista-citas.component.scss',
 })
 export default class ListaCitasComponent {
+  private readonly authService = inject(AuthService);
   private readonly citasService = inject(CitasService);
+  private readonly videoCallService = inject(VideoCallService);
   private readonly router = inject(Router);
 
   // =====================================
@@ -58,8 +62,21 @@ export default class ListaCitasComponent {
   // LIFECYCLE
   // =====================================
   constructor() {
-    this.loadProximasCitas();
-    this.loadHistorialCitas();
+    // Recargar citas cuando cambia el usuario (para evitar caché al cambiar de cuenta)
+    effect(() => {
+      const user = this.authService.user();
+      if (user) {
+        // Usuario autenticado - cargar sus citas
+        this.loadProximasCitas();
+        this.loadHistorialCitas();
+      } else {
+        // No hay usuario (logout) - limpiar datos
+        this.proximasCitas.set([]);
+        this.historialCitas.set([]);
+        this.todasPendientes.set([]);
+        this.todasAtendidas.set([]);
+      }
+    });
   }
 
   // =====================================
@@ -212,7 +229,9 @@ export default class ListaCitasComponent {
       rangeWithDots.push(1);
     }
 
-    range.forEach((i) => rangeWithDots.push(i));
+    range.forEach((i) => {
+      rangeWithDots.push(i);
+    });
 
     if (currentPage + delta < totalPages - 1) {
       rangeWithDots.push(totalPages);
@@ -307,27 +326,31 @@ export default class ListaCitasComponent {
   }
 
   ingresarASala(citaId: number): void {
-    // TODO: Navigate to video call room when backend is ready
-    // Por ahora mostramos un mensaje temporal
-    console.log(`Ingresando a sala de videollamada para cita ${citaId}`);
-
-    // Navegación futura (cuando el backend esté listo):
-    // this.router.navigate(['/citas', citaId, 'sala-espera']);
-
-    // Mensaje temporal hasta que implementemos la videollamada
-    alert('Sala de videollamada en desarrollo. Esta función estará disponible pronto.');
+    // Navegar a la sala de espera del paciente
+    this.router.navigate(['/sala-espera', citaId]);
   }
 
-  generarLinkInvitado(citaId: number): void {
-    // TODO: Generate guest link when backend is ready
-    console.log(`Generando link de invitado para cita ${citaId}`);
+  async generarLinkInvitado(citaId: number): Promise<void> {
+    try {
+      const guestData = {
+        nombreInvitado: 'Invitado',
+        rolInvitado: 'invitado' as const,
+      };
 
-    // Implementación futura:
-    // const guestLink = await this.citasService.generarLinkInvitado(citaId);
-    // navigator.clipboard.writeText(guestLink);
-    // alert('Link de invitado copiado al portapapeles');
+      const response = await this.videoCallService.createInvitation(citaId, guestData);
 
-    // Mensaje temporal
-    alert('Generación de links de invitado en desarrollo. Esta función estará disponible pronto.');
+      // Use linkInvitacion if available, otherwise construct from codigoAcceso
+      const url =
+        response.linkInvitacion || `${window.location.origin}/invitado/${response.codigoAcceso}`;
+
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(url);
+      alert('Link de invitado copiado al portapapeles: ' + url);
+    } catch (error: unknown) {
+      console.error('Error generating guest link:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error al generar link de invitado';
+      alert(errorMessage);
+    }
   }
 }

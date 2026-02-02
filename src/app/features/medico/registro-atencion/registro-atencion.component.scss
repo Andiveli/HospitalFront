@@ -1,0 +1,49 @@
+// Registro Atencion Component Styles
+
+:host {
+  display: block;
+}
+
+// Form validation styles
+input.ng-touched.ng-invalid,
+textarea.ng-touched.ng-invalid {
+  border-color: #ef4444;
+}
+
+input.ng-touched.ng-valid,
+textarea.ng-touched.ng-valid {
+  border-color: #10b981;
+}
+
+// Focus styles
+input:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+// Animation for success message
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-green-50 {
+  animation: slideIn 0.3s ease-out;
+}
+
+// Receta card hover effect
+.border-gray-200 {
+  transition: all 0.2s ease;
+}
+
+.border-gray-200:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

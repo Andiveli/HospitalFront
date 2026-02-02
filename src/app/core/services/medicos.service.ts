@@ -27,7 +27,7 @@ export class MedicosService {
     }
 
     const response = await firstValueFrom(
-      this.http.get<BackendMedicosResponseDto>(this.baseUrl, { params })
+      this.http.get<BackendMedicosResponseDto>(this.baseUrl, { params }),
     );
 
     return response.data || [];
@@ -41,13 +41,13 @@ export class MedicosService {
   async getDiasAtencion(medicoId: number): Promise<number[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<DiasAtencionApiResponseDto>(`${this.baseUrl}/${medicoId}/dias-atencion`)
+        this.http.get<DiasAtencionApiResponseDto>(
+          `${this.baseUrl}/${medicoId}/dias-atencion`,
+        ),
       );
 
       const diasStrings = response.data.diasAtencion;
 
-      // Map Spanish day names to numbers (0-6)
-      // Handle multiple variations (with/without accents, case insensitive)
       const dayMap: Record<string, number> = {
         domingo: 0,
         lunes: 1,
@@ -80,21 +80,22 @@ export class MedicosService {
    * @param fecha - Date in YYYY-MM-DD format
    * @returns Disponibilidad info with slots array
    */
-  async getDisponibilidad(medicoId: number, fecha: string): Promise<DisponibilidadResponseDto> {
+  async getDisponibilidad(
+    medicoId: number,
+    fecha: string,
+  ): Promise<DisponibilidadResponseDto> {
     const params = new HttpParams().set('fecha', fecha);
 
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: DisponibilidadResponseDto }>(
           `${this.baseUrl}/${medicoId}/disponibilidad`,
-          { params }
-        )
+          { params },
+        ),
       );
 
-      // Unwrap { message, data } response and return the data object
       return response.data;
     } catch {
-      // Return empty disponibilidad on error
       return {
         fecha,
         diaSemana: '',
@@ -106,10 +107,13 @@ export class MedicosService {
   }
 
   /**
-   * Format date for API (YYYY-MM-DD)
+   * Format date for API (YYYY-MM-DD) - using LOCAL timezone
    */
   formatDateForAPI(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -132,7 +136,15 @@ export class MedicosService {
    * Get day name from date
    */
   getDayName(date: Date): string {
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const days = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
     return days[date.getDay()];
   }
 }

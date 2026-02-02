@@ -37,6 +37,26 @@ export const routes: Routes = [
   },
 
   // ==========================================
+  // Rutas Públicas - Acceso Invitado a Videollamada
+  // ==========================================
+  {
+    path: 'invitado/:code',
+    loadComponent: () =>
+      import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(
+        (m) => m.SalaEsperaInvitadoComponent
+      ),
+    title: 'Sala de Espera - Invitado',
+  },
+  {
+    path: 'videollamada/invitado/:code',
+    loadComponent: () =>
+      import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(
+        (m) => m.SalaEsperaInvitadoComponent
+      ),
+    title: 'Sala de Espera - Invitado',
+  },
+
+  // ==========================================
   // Debug Route (Public - for testing)
   // ==========================================
   {
@@ -51,7 +71,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./features/shared/layouts/doctor-layout.component').then(
+      import('./features/shared/layout-medico/doctor-layout.component').then(
         (m) => m.DoctorLayoutComponent
       ),
     canActivate: [authGuard, doctorGuard],
@@ -78,7 +98,9 @@ export const routes: Routes = [
           {
             path: ':id',
             loadComponent: () =>
-              import('./features/citas/detalle/detalle-cita.component').then((m) => m.default),
+              import('./features/pacientes/citas/detalle/detalle-cita.component').then(
+                (m) => m.default
+              ),
             title: 'Detalle de Consulta - Portal Médico',
           },
         ],
@@ -94,24 +116,35 @@ export const routes: Routes = [
       {
         path: 'doctor/ajustes',
         loadComponent: () =>
-          import('./features/ajustes/ajustes.component').then((m) => m.AjustesComponent),
+          import('./features/shared/ajustes/ajustes.component').then((m) => m.AjustesComponent),
         title: 'Ajustes - Portal Médico',
       },
+      // Panel de consulta para médico (antes de iniciar)
       {
-        path: 'sala-espera/:id',
+        path: 'doctor/consulta/:id',
         loadComponent: () =>
-          import('./features/video-call/sala-espera-paciente/sala-espera-paciente.component').then(
-            (m) => m.SalaEsperaPacienteComponent
-          ),
-        title: 'Sala de Espera - Portal Médico',
+          import(
+            './features/video-call/panel-consulta-medico/panel-consulta-medico.component'
+          ).then((m) => m.PanelConsultaMedicoComponent),
+        title: 'Panel de Consulta - Portal Médico',
       },
+      // Sala de videollamada para médico
       {
-        path: 'sala-espera-invitado/:code',
+        path: 'doctor/videollamada/:id',
         loadComponent: () =>
-          import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(
-            (m) => m.SalaEsperaInvitadoComponent
+          import('./features/video-call/sala-videollamada/sala-videollamada.component').then(
+            (m) => m.SalaVideollamadaComponent
           ),
-        title: 'Sala de Espera Invitado - Portal Médico',
+        title: 'Videollamada - Portal Médico',
+      },
+      // Registro de atención médica (post-sesión)
+      {
+        path: 'doctor/registro-atencion/:id',
+        loadComponent: () =>
+          import('./features/medico/registro-atencion/registro-atencion.component').then(
+            (m) => m.RegistroAtencionComponent
+          ),
+        title: 'Registro de Atención - Portal Médico',
       },
       {
         path: '',
@@ -127,7 +160,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./features/shared/layouts/patient-layout.component').then(
+      import('./features/shared/layout-paciente/patient-layout.component').then(
         (m) => m.PatientLayoutComponent
       ),
     canActivate: [authGuard, patientGuard],
@@ -135,7 +168,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/pacientes/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent
+          ),
         title: 'Inicio - Hospital App',
       },
       {
@@ -143,22 +178,26 @@ export const routes: Routes = [
         children: [
           {
             path: '',
-            loadComponent: () => import('./features/citas/lista/lista-citas.component'),
+            loadComponent: () => import('./features/pacientes/citas/lista/lista-citas.component'),
             title: 'Mis Citas - Hospital App',
           },
           {
             path: 'agendar',
-            loadComponent: () => import('./features/citas/agendar/agendar-cita.component'),
+            loadComponent: () =>
+              import('./features/pacientes/citas/agendar/agendar-cita.component'),
             title: 'Agendar Cita - Hospital App',
           },
           {
             path: ':id',
             loadComponent: () =>
-              import('./features/citas/detalle/detalle-cita.component').then((m) => m.default),
+              import('./features/pacientes/citas/detalle/detalle-cita.component').then(
+                (m) => m.default
+              ),
             title: 'Detalle de Cita - Hospital App',
           },
         ],
       },
+      // Sala de espera para paciente
       {
         path: 'sala-espera/:id',
         loadComponent: () =>
@@ -167,24 +206,39 @@ export const routes: Routes = [
           ),
         title: 'Sala de Espera - Hospital App',
       },
+      // Sala de videollamada para paciente
       {
-        path: 'sala-espera-invitado/:code',
+        path: 'videollamada/:id',
         loadComponent: () =>
-          import('./features/video-call/sala-espera-invitado/sala-espera-invitado.component').then(
-            (m) => m.SalaEsperaInvitadoComponent
+          import('./features/video-call/sala-videollamada/sala-videollamada.component').then(
+            (m) => m.SalaVideollamadaComponent
           ),
-        title: 'Sala de Espera Invitado - Hospital App',
+        title: 'Videollamada - Hospital App',
       },
       {
         path: 'profile',
         loadComponent: () =>
-          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+          import('./features/pacientes/profile/profile.component').then((m) => m.ProfileComponent),
         title: 'Mi Perfil - Hospital App',
+      },
+      {
+        path: 'documentos',
+        loadComponent: () =>
+          import('./features/pacientes/documents/documents.component').then(
+            (m) => m.DocumentsComponent
+          ),
+        title: 'Mis Documentos - Hospital App',
+      },
+      {
+        path: 'recetas',
+        loadComponent: () =>
+          import('./features/pacientes/recetas/recetas.component').then((m) => m.RecetasComponent),
+        title: 'Mis Recetas - Hospital App',
       },
       {
         path: 'ajustes',
         loadComponent: () =>
-          import('./features/ajustes/ajustes.component').then((m) => m.AjustesComponent),
+          import('./features/shared/ajustes/ajustes.component').then((m) => m.AjustesComponent),
         title: 'Ajustes - Hospital App',
       },
       {

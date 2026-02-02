@@ -12,16 +12,16 @@ import { Router } from '@angular/router';
 import {
   type CitaDetalladaResponseDto,
   formatMedicoNombreSimplificado,
-} from '../../../core/models';
-import type { GenerarInvitacionDto } from '../../../core/models/video-call.models';
-import { CitasService } from '../../../core/services/citas.service';
-import { VideoCallService } from '../../../core/services/video-call.service';
+} from '../../../../core/models';
+import type { GenerarInvitacionDto } from '../../../../core/models/video-call.models';
+import { CitasService } from '../../../../core/services/citas.service';
+import { VideoCallService } from '../../../../core/services/video-call.service';
 import {
   getTimeUntilReady,
   hasAppointmentExpired,
   isAppointmentTimeReady,
-} from '../../../core/utils/appointment-time.utils';
-import EditCitaModalComponent from '../../../shared/components/edit-cita-modal/edit-cita-modal.component';
+} from '../../../../core/utils/appointment-time.utils';
+import EditCitaModalComponent from '../../../../shared/components/edit-cita-modal/edit-cita-modal.component';
 
 @Component({
   selector: 'app-detalle-cita',
@@ -197,15 +197,8 @@ export default class DetalleCitaComponent {
     const citaData = this.cita();
     if (!citaData) return;
 
-    // TODO: Navigate to video call room when backend is ready
-    // Por ahora mostramos un mensaje temporal
-    console.log(`Ingresando a sala de videollamada para cita ${citaData.id}`);
-
-    // Navegación futura (cuando el backend esté listo):
-    // this.router.navigate(['/citas', citaData.id, 'sala-espera']);
-
-    // Mensaje temporal hasta que implementemos la videollamada
-    alert('Sala de videollamada en desarrollo. Esta función estará disponible pronto.');
+    // Navegar a la sala de espera del paciente
+    this.router.navigate(['/sala-espera', citaData.id]);
   }
 
   async generarLinkInvitado(): Promise<void> {
@@ -220,19 +213,25 @@ export default class DetalleCitaComponent {
 
       const response = await this.videoCallService.createInvitation(citaData.id, guestData);
 
+      // Use linkInvitacion if available, otherwise construct from codigoAcceso
+      const url =
+        response.linkInvitacion || `${window.location.origin}/invitado/${response.codigoAcceso}`;
+
       // Copiar al portapapeles
-      await navigator.clipboard.writeText(response.accessUrl);
+      await navigator.clipboard.writeText(url);
 
       // Mostrar mensaje de éxito
-      this.successMessage.set(`Link de invitado generado: ${response.accessUrl}`);
+      this.successMessage.set(`Link de invitado generado: ${url}`);
 
       // Limpiar mensaje de éxito después de 5 segundos
       setTimeout(() => {
         this.successMessage.set(null);
       }, 5000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating guest link:', error);
-      this.error.set(error?.message || 'Error al generar link de invitado');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error al generar link de invitado';
+      this.error.set(errorMessage);
     }
   }
 
@@ -281,6 +280,14 @@ export default class DetalleCitaComponent {
       this.showCancelConfirm.set(false);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  // Navigate to medical attention record creation
+  irARegistroAtencion(): void {
+    const citaId = this.cita()?.id;
+    if (citaId) {
+      this.router.navigate(['/doctor/registro-atencion', citaId]);
     }
   }
 }

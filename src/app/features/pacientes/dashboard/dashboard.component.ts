@@ -9,9 +9,9 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import type { CitaResponseDto } from '../../core/models';
-import { AuthService } from '../../core/services/auth.service';
-import { CitasService } from '../../core/services/citas.service';
+import type { CitaResponseDto } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { CitasService } from '../../../core/services/citas.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -48,16 +48,16 @@ export class DashboardComponent {
     const tiempo = this.tiempoParaCita();
     if (tiempo === null) return false;
 
-    // Mostrar 5 minutos antes (300000 ms = 5 min) hasta 10 minutos después (600000 ms = 10 min)
-    return tiempo <= 300000 && tiempo >= -600000;
+    // Mostrar 10 minutos antes (600000 ms = 10 min) hasta 5 minutos después (300000 ms = 5 min)
+    return tiempo <= 600000 && tiempo >= -300000;
   });
 
   readonly citaExpirada = computed(() => {
     const tiempo = this.tiempoParaCita();
     if (tiempo === null) return false;
 
-    // Si pasaron más de 10 minutos después de la hora de cita
-    return tiempo < -600000;
+    // Si pasaron más de 5 minutos después de la hora de cita
+    return tiempo < -300000;
   });
 
   readonly mensajeBoton = computed(() => {
@@ -66,7 +66,7 @@ export class DashboardComponent {
     if (this.ingresarSalaVisible()) return 'Ingresar a Sala';
 
     const tiempo = this.tiempoParaCita();
-    if (tiempo && tiempo > 300000) {
+    if (tiempo && tiempo > 600000) {
       const minutos = Math.floor(tiempo / 60000);
       return `Espera ${minutos} min para ingresar`;
     }
@@ -93,16 +93,41 @@ export class DashboardComponent {
   ];
 
   constructor() {
-    this.loadProximaCita();
     this.iniciarReloj();
+
+    // Recargar citas cuando cambia el usuario (para evitar caché al cambiar de cuenta)
+    effect(() => {
+      const user = this.user();
+      if (user) {
+        // Usuario paciente autenticado - cargar sus citas
+        this.loadProximaCita();
+      } else {
+        // No hay usuario (logout) - limpiar datos
+        this.proximaCita.set(null);
+      }
+    });
   }
 
   async loadProximaCita(): Promise<void> {
     this.loadingCita.set(true);
     try {
       const citas = await this.citasService.getProximasCitas();
-      // Get the first one (most recent)
-      this.proximaCita.set(citas[0] || null);
+
+      // Filtrar citas que no han expirado (hasta 5 min después de la hora)
+      const ahora = Date.now();
+      const citasValidas = citas.filter((cita) => {
+        const horaCita = new Date(cita.fechaHoraInicio).getTime();
+        // La cita es válida si aún no han pasado 5 minutos desde su hora
+        return ahora <= horaCita + 5 * 60 * 1000;
+      });
+
+      // Ordenar por fecha más próxima primero
+      citasValidas.sort(
+        (a, b) => new Date(a.fechaHoraInicio).getTime() - new Date(b.fechaHoraInicio).getTime()
+      );
+
+      // Get the first one (most próxima)
+      this.proximaCita.set(citasValidas[0] || null);
     } catch {
       this.proximaCita.set(null);
     } finally {

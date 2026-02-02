@@ -1,8 +1,14 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  type HttpErrorResponse,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import type {
+  ApiError,
   CitaDetalladaResponseDto,
   CitaResponseDto,
   CreateCitaDto,
@@ -11,6 +17,14 @@ import type {
   UpdateCitaDto,
 } from '../models';
 
+/**
+ * Error personalizado para citas
+ */
+export interface CitasError extends Error {
+  statusCode?: number;
+  backendMessage?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -18,18 +32,45 @@ export class CitasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/citas`;
 
-  // =====================================
-  // GET - List Appointments
-  // =====================================
+  /**
+   * Extrae el mensaje de error del backend
+   */
+  private handleError(error: HttpErrorResponse): never {
+    let errorMessage = 'Error al procesar la cita';
+    let backendMessage: string | undefined;
+
+    if (error.error && typeof error.error === 'object') {
+      const apiError = error.error as ApiError;
+      backendMessage = apiError.message;
+      errorMessage = apiError.message || errorMessage;
+    } else if (error.status === 0) {
+      errorMessage = 'No se pudo conectar con el servidor';
+    } else if (error.status === 401) {
+      errorMessage = 'No autorizado';
+    } else if (error.status === 404) {
+      errorMessage = backendMessage || 'Cita no encontrada';
+    } else if (error.status === 409) {
+      errorMessage = backendMessage || 'Conflicto al procesar la cita';
+    } else if (error.status >= 500) {
+      errorMessage = 'Error en el servidor';
+    }
+
+    const customError = new Error(errorMessage) as CitasError;
+    customError.statusCode = error.status;
+    customError.backendMessage = backendMessage;
+    throw customError;
+  }
 
   /**
    * Get next 3 upcoming appointments (para pacientes)
-   * GET /citas/proximas
+   * GET /citas/paciente/proximas
    */
   async getProximasCitas(): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/proximas`)
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(
+          `${this.baseUrl}/paciente/proximas`,
+        ),
       );
       return response.data || [];
     } catch {
@@ -38,15 +79,74 @@ export class CitasService {
   }
 
   /**
-   * Get next upcoming appointments for doctor (para médicos)
+   * Get last 4 attended appointments (para pacientes)
+   * GET /citas/paciente/recientes
+   */
+  async getRecientesCitas(): Promise<CitaResponseDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(
+          `${this.baseUrl}/paciente/recientes`,
+        ),
+      );
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get all pending appointments with pagination (para pacientes)
+   * GET /citas/paciente/pendientes?page=1&limit=10
+   */
+  async getPendientesCitas(
+    params: PaginationParams,
+  ): Promise<PaginatedResponse<CitaResponseDto>> {
+    const httpParams = new HttpParams()
+      .set('page', params.page.toString())
+      .set('limit', params.limit.toString());
+
+    return firstValueFrom(
+      this.http.get<PaginatedResponse<CitaResponseDto>>(
+        `${this.baseUrl}/paciente/pendientes`,
+        {
+          params: httpParams,
+        },
+      ),
+    );
+  }
+
+  /**
+   * Get all attended appointments with pagination (para pacientes)
+   * GET /citas/paciente/atendidas?page=1&limit=10
+   */
+  async getAtendidasCitas(
+    params: PaginationParams,
+  ): Promise<PaginatedResponse<CitaResponseDto>> {
+    const httpParams = new HttpParams()
+      .set('page', params.page.toString())
+      .set('limit', params.limit.toString());
+
+    return firstValueFrom(
+      this.http.get<PaginatedResponse<CitaResponseDto>>(
+        `${this.baseUrl}/paciente/atendidas`,
+        {
+          params: httpParams,
+        },
+      ),
+    );
+  }
+
+  /**
+   * Get next upcoming appointments for doctor
    * GET /citas/medico/proximas
    */
   async getProximasCitasMedico(): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/medico/proximas`
-        )
+          `${this.baseUrl}/medico/proximas`,
+        ),
       );
       return response.data || [];
     } catch {
@@ -55,13 +155,15 @@ export class CitasService {
   }
 
   /**
-   * Get all appointments for doctor (para médicos)
+   * Get all appointments for doctor (paginated)
    * GET /citas/medico/all
    */
   async getAllCitasMedico(): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/medico/all`)
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(
+          `${this.baseUrl}/medico/all`,
+        ),
       );
       return response.data || [];
     } catch {
@@ -70,15 +172,15 @@ export class CitasService {
   }
 
   /**
-   * Get appointments for doctor filtered by date (para médicos)
+   * Get appointments for doctor filtered by date
    * GET /citas/medico/fecha?fecha=YYYY-MM-DD
    */
   async getCitasMedicoPorFecha(fecha: string): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/medico/fecha?fecha=${fecha}`
-        )
+          `${this.baseUrl}/medico/fecha?fecha=${fecha}`,
+        ),
       );
       return response.data || [];
     } catch {
@@ -87,130 +189,86 @@ export class CitasService {
   }
 
   /**
-   * Get last 4 attended appointments
-   * GET /citas/recientes
-   *
-   * Backend returns: { message: string, data: CitaResponseDto[] }
-   */
-  async getRecientesCitas(): Promise<CitaResponseDto[]> {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/recientes`)
-      );
-      return response.data || [];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Get all pending appointments (paginated)
-   * GET /citas/pendientes?page=1&limit=10
-   */
-  async getPendientesCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
-    const httpParams = new HttpParams()
-      .set('page', params.page.toString())
-      .set('limit', params.limit.toString());
-
-    return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/pendientes`, {
-        params: httpParams,
-      })
-    );
-  }
-
-  /**
-   * Get all attended appointments (paginated)
-   * GET /citas/atendidas?page=1&limit=10
-   */
-  async getAtendidasCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
-    const httpParams = new HttpParams()
-      .set('page', params.page.toString())
-      .set('limit', params.limit.toString());
-
-    return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/atendidas`, {
-        params: httpParams,
-      })
-    );
-  }
-
-  /**
-   * Get appointment details (para pacientes)
-   * GET /citas/{id}
+   * Get appointment details for patient
+   * GET /citas/paciente/{id}
    */
   async getCitaDetalle(id: number): Promise<CitaDetalladaResponseDto> {
     const response = await firstValueFrom(
-      this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(`${this.baseUrl}/${id}`)
+      this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(
+        `${this.baseUrl}/paciente/${id}`,
+      ),
     );
     return response.data;
   }
 
   /**
-   * Get appointment details for doctor (para médicos)
+   * Get appointment details for doctor
    * GET /citas/medico/{id}
    */
   async getCitaDetalleMedico(id: number): Promise<CitaDetalladaResponseDto> {
     const response = await firstValueFrom(
       this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(
-        `${this.baseUrl}/medico/${id}`
-      )
+        `${this.baseUrl}/medico/${id}`,
+      ),
     );
     return response.data;
   }
 
-  // =====================================
-  // POST - Create Appointment
-  // =====================================
-
   /**
-   * Create a new appointment
-   * POST /citas
-   *
-   * Requirements:
-   * - medicoId: number
-   * - fechaHoraInicio: ISO 8601 string
-   * - telefonica: boolean
+   * Create a new appointment (para pacientes)
+   * POST /citas/paciente
    */
   async createCita(dto: CreateCitaDto): Promise<CitaResponseDto> {
-    return firstValueFrom(this.http.post<CitaResponseDto>(this.baseUrl, dto));
+    return firstValueFrom(
+      this.http
+        .post<CitaResponseDto>(`${this.baseUrl}/paciente`, dto)
+        .pipe(
+          catchError((error: HttpErrorResponse) =>
+            throwError(() => this.handleError(error)),
+          ),
+        ),
+    );
   }
 
-  // =====================================
-  // PUT - Update Appointment
-  // =====================================
-
   /**
-   * Update an existing appointment
-   * PUT /citas/{id}
+   * Update an existing appointment (para pacientes)
+   * PUT /citas/paciente/{id}
    *
    * Restrictions:
    * - Only pending appointments can be updated
    * - Must be 72+ hours in advance
    */
   async updateCita(id: number, dto: UpdateCitaDto): Promise<CitaResponseDto> {
-    return firstValueFrom(this.http.put<CitaResponseDto>(`${this.baseUrl}/${id}`, dto));
+    return firstValueFrom(
+      this.http
+        .put<CitaResponseDto>(`${this.baseUrl}/paciente/${id}`, dto)
+        .pipe(
+          catchError((error: HttpErrorResponse) =>
+            throwError(() => this.handleError(error)),
+          ),
+        ),
+    );
   }
 
-  // =====================================
-  // DELETE - Cancel Appointment
-  // =====================================
-
   /**
-   * Cancel an appointment
-   * DELETE /citas/{id}
+   * Cancel an appointment (para pacientes)
+   * DELETE /citas/paciente/{id}
    *
    * Restrictions:
    * - Only pending appointments can be cancelled
    * - Must be 72+ hours in advance
    */
   async cancelCita(id: number): Promise<{ message: string }> {
-    return firstValueFrom(this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`));
+    return firstValueFrom(
+      this.http
+        .delete<{ message: string }>(`${this.baseUrl}/paciente/${id}`)
+        .pipe(
+          catchError((error: HttpErrorResponse) =>
+            throwError(() => this.handleError(error)),
+          ),
+        ),
+    );
   }
-
-  // =====================================
-  // HELPER METHODS
-  // =====================================
 
   /**
    * Check if appointment can be modified or cancelled
@@ -219,7 +277,8 @@ export class CitasService {
   canModifyCita(fechaHoraInicio: string): boolean {
     const citaDate = new Date(fechaHoraInicio);
     const now = new Date();
-    const hoursUntilCita = (citaDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursUntilCita =
+      (citaDate.getTime() - now.getTime()) / (1000 * 60 * 60);
     return hoursUntilCita >= 72;
   }
 

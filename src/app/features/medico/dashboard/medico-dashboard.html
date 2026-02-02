@@ -91,19 +91,29 @@
 
       <div class="flex-1 flex justify-end">
         @if (puedeIngresar(cita)) {
-        <button
-          [routerLink]="['/sala-espera', cita.id]"
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
-        >
-          Ingresar →
-        </button>
+          <!-- Botón Ingresar (visible 10 min antes hasta 5 min después) -->
+          <button
+            [routerLink]="['/doctor/consulta', cita.id]"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+          >
+            Ingresar →
+          </button>
+        } @else if (citaExpirada(cita)) {
+          <!-- Botón Cita Expirada -->
+          <button
+            disabled
+            class="px-6 py-2 bg-slate-400 text-white rounded-lg font-medium cursor-not-allowed"
+          >
+            Cita Expirada
+          </button>
         } @else {
-        <button
-          disabled
-          class="px-6 py-2 bg-slate-200 text-slate-400 rounded-lg font-medium cursor-not-allowed"
-        >
-          Ingresar
-        </button>
+          <!-- Botón Ver Detalles (cuando falta más de 10 min para la cita) -->
+          <button
+            [routerLink]="['/citas/medico', cita.id]"
+            class="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 font-medium"
+          >
+            Ver Detalles
+          </button>
         }
       </div>
     </div>

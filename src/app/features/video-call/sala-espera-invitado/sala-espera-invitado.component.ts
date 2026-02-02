@@ -1,10 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  GenerarInvitacionDto,
-  type GuestValidationDto,
-} from '../../../core/models/video-call.models';
+import type { ValidacionInvitadoDataDto } from '../../../core/models/video-call.models';
 import { VideoCallService } from '../../../core/services/video-call.service';
 
 @Component({
@@ -23,7 +20,7 @@ export class SalaEsperaInvitadoComponent {
   // STATE
   // =====================================
   guestCode = signal<string | null>(null);
-  validationData = signal<GuestValidationDto | null>(null);
+  validationData = signal<ValidacionInvitadoDataDto | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -71,8 +68,8 @@ export class SalaEsperaInvitadoComponent {
         return hasStream
           ? { text: 'Listo', color: 'text-green-600', icon: 'ready' }
           : { text: 'Configurando...', color: 'text-blue-600', icon: 'configuring' };
-      case 'reconnecting':
-        return { text: 'Reconectando...', color: 'text-orange-600', icon: 'reconnecting' };
+      case 'error':
+        return { text: 'Error', color: 'text-red-600', icon: 'disconnected' };
       default:
         return { text: 'Desconectado', color: 'text-red-600', icon: 'disconnected' };
     }
@@ -94,10 +91,10 @@ export class SalaEsperaInvitadoComponent {
     if (!validation) return null;
 
     return {
-      name: validation.guestInfo?.nombre || 'Invitado',
-      role: validation.guestInfo?.rol || 'invitado',
-      pacienteNombre: validation.pacienteNombre,
-      medicoNombre: validation.medicoNombre,
+      name: validation.nombreInvitado || 'Invitado',
+      role: validation.rolInvitado || 'invitado',
+      pacienteNombre: validation.nombrePaciente,
+      medicoNombre: validation.nombreMedico,
       citaId: validation.citaId,
     };
   });
@@ -131,14 +128,16 @@ export class SalaEsperaInvitadoComponent {
 
       const validation = await this.videoCallService.validateGuestCode(code);
       this.validationData.set(validation);
-      this.isValidCode.set(validation.isValid);
+      this.isValidCode.set(validation.valido);
 
-      if (validation.isValid && validation.roomInfo) {
+      if (validation.valido) {
         // Start waiting room session
         await this.startWaitingRoom(validation.citaId, code);
       }
-    } catch (error: any) {
-      this.error.set(error?.message || 'Código de acceso inválido o expirado');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Código de acceso inválido o expirado';
+      this.error.set(errorMessage);
       this.isValidCode.set(false);
     } finally {
       this.loading.set(false);
@@ -150,16 +149,14 @@ export class SalaEsperaInvitadoComponent {
       this.loading.set(true);
       this.startWaitingTimer();
 
-      // Join the video room as guest
-      await this.videoCallService.joinRoom(citaId, guestCode);
+      // Get guest name from validation data
+      const guestName = this.validationData()?.nombreInvitado || 'Invitado';
 
-      // Initialize local stream for preview
-      await this.videoCallService.initializeLocalStream({
-        enableVideo: true,
-        enableAudio: true,
-      });
-    } catch (error: any) {
-      this.error.set(error?.message || 'Error al conectar con la sala');
+      // Join the video room as guest (this also initializes local stream)
+      await this.videoCallService.joinRoom(citaId, guestCode, guestName);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al conectar con la sala';
+      this.error.set(errorMessage);
       console.error('Error joining guest waiting room:', error);
     } finally {
       this.loading.set(false);

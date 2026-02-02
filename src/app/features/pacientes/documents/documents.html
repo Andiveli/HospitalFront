@@ -1,0 +1,121 @@
+<div class="p-6 max-w-5xl mx-auto">
+  <!-- Header -->
+  <header class="mb-8 text-center">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+      Mis Documentos Médicos
+    </h1>
+  </header>
+
+  <!-- Filters Section -->
+  <section class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-8">
+    <span class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      Filtros
+    </span>
+    <div class="flex gap-2 flex-wrap sm:flex-nowrap overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+      @for (filter of availableFilters; track filter.id) {
+        <button
+          type="button"
+          class="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          [class]="isFilterActive(filter.id) 
+            ? 'bg-gray-900 text-white border-gray-900' 
+            : 'bg-white text-gray-600 border-gray-700 hover:text-gray-900 hover:bg-blue-50'"
+          (click)="setFilter(filter.id)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-12 text-gray-500">
+      <div class="w-10 h-10 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+      <p class="text-sm">Cargando documentos...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <svg class="w-12 h-12 text-red-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="text-gray-600 mb-4">{{ error() }}</p>
+      <button 
+        type="button" 
+        class="px-6 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        (click)="loadDocuments()"
+      >
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Documents List -->
+  @if (!loading() && !error()) {
+    <section class="mt-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">
+        Documentos Recientes
+      </h2>
+      
+      @if (documents().length === 0) {
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <svg class="w-12 h-12 text-gray-400 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <p class="text-gray-500 mb-4">No hay documentos disponibles</p>
+          @if (activeFilter() !== DOCUMENT_FILTER_TYPES.ALL) {
+            <button 
+              type="button" 
+              class="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-colors"
+              (click)="setFilter(DOCUMENT_FILTER_TYPES.ALL)"
+            >
+              Ver todos los documentos
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-3">
+          @for (document of documents(); track document.id) {
+            <div 
+              class="flex items-center justify-between p-4 bg-white border-2 border-gray-700 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-900 transition-all duration-200"
+            >
+              <div class="flex items-center gap-3 flex-wrap flex-1 min-w-0">
+                <span class="font-medium text-gray-900 text-sm md:text-base truncate">
+                  {{ document.titulo }}
+                </span>
+                <span class="text-gray-400 font-light hidden sm:inline">|</span>
+                <span class="text-sm text-gray-500">
+                  {{ formatDate(document.fechaHoraSubida) }}
+                </span>
+                <span class="text-gray-400 font-light hidden sm:inline">|</span>
+                <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded uppercase tracking-wide">
+                  {{ getFileTypeLabel(document.mimeType) }}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="flex items-center justify-center w-10 h-10 ml-3 text-gray-500 border-2 border-gray-700 rounded-md hover:text-white hover:bg-blue-500 hover:border-blue-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex-shrink-0"
+                (click)="downloadDocument(document)"
+                [attr.aria-label]="'Descargar ' + document.titulo"
+              >
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

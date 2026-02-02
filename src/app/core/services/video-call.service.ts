@@ -1,301 +1,446 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { computed, DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, timer } from 'rxjs';
-import { catchError, take, timeout } from 'rxjs/operators';
-import {
-  type ChatMessageDto,
-  type GenerarInvitacionDto,
-  type GenerateGuestLinkResponseDto,
-  type GuestValidationDto,
-  type InvitacionResponseDto,
-  type ParticipantInfoDto,
-  ParticipantRole,
-  type RoomEventDto,
-  RoomEventType,
-  type SignalType,
-  type VideoRoomSessionDto,
-  WebRtcConfigDto,
-  type WebRtcSignalDto,
+import { Subject } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import type {
+  ChatMessageDto,
+  ChatMessageEventDto,
+  GenerarInvitacionDto,
+  LinkInvitacionDataDto,
+  ParticipantInfoDto,
+  ValidacionInvitadoDataDto,
 } from '../models/video-call.models';
+import { AuthService } from './auth.service';
+import { VideoCallSocketService } from './video-call-socket.service';
 
-export interface WebRTCServiceConfig {
-  iceServers?: RTCIceServer[];
-  enableVideo?: boolean;
-  enableAudio?: boolean;
-}
+// =====================================
+// WEBRTC CONFIG
+// =====================================
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
 
+const RTC_CONFIG: RTCConfiguration = {
+  iceServers: DEFAULT_ICE_SERVERS,
+  iceCandidatePoolSize: 10,
+};
+
+// =====================================
+// VIDEO CALL SERVICE
+// Synchronized with Backend WebSocket Documentation
+// =====================================
 @Injectable({
   providedIn: 'root',
 })
 export class VideoCallService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly socketService = inject(VideoCallSocketService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  // API Base URLs (should come from environment config)
-  private readonly apiUrl = 'http://localhost:3000/api';
+  private readonly apiUrl = environment.apiUrl;
 
   // =====================================
   // STATE SIGNALS
   // =====================================
-  currentRoom = signal<VideoRoomSessionDto | null>(null);
-  localStream = signal<MediaStream | null>(null);
-  participants = signal<ParticipantInfoDto[]>([]);
-  isAudioEnabled = signal(true);
-  isVideoEnabled = signal(true);
-  isScreenSharing = signal(false);
-  isRecording = signal(false);
-  connectionState = signal<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>(
+  readonly localStream = signal<MediaStream | null>(null);
+  readonly remoteStreams = signal<Map<string, MediaStream>>(new Map());
+  readonly isAudioEnabled = signal(true);
+  readonly isVideoEnabled = signal(true);
+  readonly isScreenSharing = signal(false);
+  readonly connectionState = signal<'disconnected' | 'connecting' | 'connected' | 'error'>(
     'disconnected'
   );
-  error = signal<string | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly currentCitaId = signal<number | null>(null);
 
-  // Observable streams for real-time updates
-  private chatMessages$ = new Subject<ChatMessageDto>();
-  private roomEvents$ = new Subject<RoomEventDto>();
-  private participantJoined$ = new Subject<ParticipantInfoDto>();
-  private participantLeft$ = new Subject<string>();
-  private incomingSignals$ = new Subject<WebRtcSignalDto>();
+  // Chat state
+  readonly chatMessages = signal<ChatMessageDto[]>([]);
+  private readonly _chatMessage$ = new Subject<ChatMessageDto>();
+  readonly chatMessage$ = this._chatMessage$.asObservable();
 
-  // =====================================
-  // WebRTC Peer Connections
-  // =====================================
-  private peerConnections: Map<string, RTCPeerConnection> = new Map();
-  private localPeerConnection: RTCPeerConnection | null = null;
-  private pendingCandidates: Map<string, RTCIceCandidate[]> = new Map();
-
-  // =====================================
-  // TIMERS AND MONITORING
-  // =====================================
-  private connectionTimer: any = null;
-  private heartbeatInterval: any = null;
+  // Call duration
   private callStartTime: number | null = null;
-  private currentCallDuration = signal(0);
+  private durationInterval: ReturnType<typeof setInterval> | null = null;
+  readonly callDuration = signal(0);
+
+  // Session time warnings
+  readonly timeWarning = signal<{
+    show: boolean;
+    type: '5min' | '1min' | '30sec' | null;
+    message: string;
+    tiempoRestante: number;
+  }>({ show: false, type: null, message: '', tiempoRestante: 0 });
+  readonly sessionEnded = signal<boolean>(false);
+  readonly sessionEndReason = signal<string | null>(null);
 
   // =====================================
-  // PUBLIC OBSERVABLES
+  // WEBRTC STATE
   // =====================================
-  readonly chatMessages = this.chatMessages$.asObservable();
-  readonly roomEvents = this.roomEvents$.asObservable();
-  readonly participantJoined = this.participantJoined$.asObservable();
-  readonly participantLeft = this.participantLeft$.asObservable();
-  readonly incomingSignals = this.incomingSignals$.asObservable();
-  readonly callDuration = new Observable<number>((subscriber) => {
-    const value = this.currentCallDuration();
-    subscriber.next(value);
-    subscriber.complete();
+  private peerConnections = new Map<string, RTCPeerConnection>();
+  private pendingIceCandidates = new Map<string, RTCIceCandidateInit[]>();
+
+  // =====================================
+  // COMPUTED
+  // =====================================
+
+  // Participants from socket + their remote streams
+  readonly participants = computed((): ParticipantInfoDto[] => {
+    const socketParticipants = this.socketService.participants();
+    const streams = this.remoteStreams();
+
+    return socketParticipants.map((p) => ({
+      ...p,
+      mediaStream: streams.get(p.id),
+    }));
+  });
+
+  readonly isConnected = computed(() => this.connectionState() === 'connected');
+
+  readonly formattedCallDuration = computed(() => {
+    const totalSeconds = this.callDuration();
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   });
 
   // =====================================
-  // ROOM MANAGEMENT
+  // CONSTRUCTOR - Setup socket listeners
+  // =====================================
+  constructor() {
+    this.setupSocketListeners();
+  }
+
+  private setupSocketListeners(): void {
+    // Room joined - create offers for existing participants
+    this.socketService.roomJoined$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      console.log('[VideoCall] Room joined, event:', event);
+
+      if (!event.success) {
+        console.error('[VideoCall] Failed to join room:', event.error);
+        this.error.set(event.error || 'Failed to join room');
+        this.connectionState.set('error');
+        return;
+      }
+
+      this.connectionState.set('connected');
+      this.startCallTimer();
+
+      // Create offers for each existing participant
+      if (event.participants) {
+        event.participants.forEach((participant) => {
+          const socketId = participant.socketId;
+          if (socketId && socketId !== this.socketService.mySocketId()) {
+            this.createOffer(socketId);
+          }
+        });
+      }
+    });
+
+    // New participant joined - create offer (using userConnected$ which is the new event)
+    this.socketService.userConnected$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        const socketId = event.socketId;
+        console.log('[VideoCall] New participant, creating offer for:', socketId);
+        if (socketId) {
+          this.createOffer(socketId);
+        }
+      });
+
+    // Participant left - cleanup peer connection
+    this.socketService.userDisconnected$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        const socketId = event.socketId;
+        console.log('[VideoCall] Participant left:', socketId);
+        if (socketId) {
+          this.closePeerConnection(socketId);
+        }
+      });
+
+    // WebRTC offer received
+    this.socketService.webrtcOffer$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (event) => {
+        console.log('[VideoCall] Received offer from:', event.from);
+        if (event.sdp) {
+          await this.handleOffer(event.from, event.sdp);
+        }
+      });
+
+    // WebRTC answer received
+    this.socketService.webrtcAnswer$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (event) => {
+        console.log('[VideoCall] Received answer from:', event.from);
+        if (event.sdp) {
+          await this.handleAnswer(event.from, event.sdp);
+        }
+      });
+
+    // ICE candidate received
+    this.socketService.webrtcIceCandidate$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (event) => {
+        console.log('[VideoCall] Received ICE candidate from:', event.from);
+        if (event.candidate) {
+          await this.handleIceCandidate(event.from, event.candidate);
+        }
+      });
+
+    // Chat message received
+    this.socketService.chatMessage$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event: ChatMessageEventDto) => {
+        const message = this.socketService.toChatMessageDto(event);
+        this.chatMessages.update((messages) => [...messages, message]);
+        this._chatMessage$.next(message);
+      });
+
+    // Room ended
+    this.socketService.roomEnded$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      console.log('[VideoCall] Room ended by host');
+      this.leaveRoom();
+    });
+
+    // Time warning (5min, 1min, 30sec before session ends)
+    this.socketService.timeWarning$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      console.log(`[VideoCall] Time warning: ${event.tipo}`);
+      this.timeWarning.set({
+        show: true,
+        type: event.tipo,
+        message: event.mensaje,
+        tiempoRestante: event.tiempoRestante,
+      });
+    });
+
+    // Session ended (time expired or host closed)
+    this.socketService.sessionEnded$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (event) => {
+        console.log('[VideoCall] Session ended:', event.razon);
+        this.sessionEnded.set(true);
+        this.sessionEndReason.set(event.mensaje);
+
+        // Auto-close the video call after a short delay to show the message
+        setTimeout(() => {
+          this.leaveRoom();
+
+          // If doctor and requires medical record, redirect to medical record creation
+          if (event.requiereRegistroMedico && this.authService.isDoctor()) {
+            const citaId = this.currentCitaId();
+            if (citaId) {
+              this.router.navigate(['/doctor/registro-atencion', citaId]);
+            }
+          }
+        }, 3000);
+      });
+
+    // Socket errors
+    this.socketService.exception$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((error) => {
+      console.error('[VideoCall] Socket error:', error);
+      this.error.set(error.message);
+    });
+  }
+
+  // =====================================
+  // PUBLIC METHODS - Join/Leave
   // =====================================
 
   /**
-   * Create a new video room for an appointment
+   * Create video room session via REST API
+   * This must be called BEFORE connecting to WebSocket
    */
-  async createRoom(citaId: number, config?: WebRTCServiceConfig): Promise<VideoRoomSessionDto> {
+  private async createRoomSession(citaId: number): Promise<void> {
     try {
-      this.connectionState.set('connecting');
-      this.error.set(null);
-
+      console.log('[VideoCall] Creating room session for cita:', citaId);
       const response = await this.http
-        .post<any>(`${this.apiUrl}/video-rooms/${citaId}/create`, config)
+        .post<{ message: string; data: unknown }>(`${this.apiUrl}/video-rooms/${citaId}/create`, {})
         .toPromise();
-
-      const session: VideoRoomSessionDto = {
-        roomId: response.roomId,
-        sessionToken: response.sessionToken,
-        participantId: response.participantId || 'current-user',
-        participantRole: 'patient', // Default role
-        iceServers: this.parseIceServers(response.iceServers),
-        participants: [],
-        createdAt: new Date().toISOString(),
-        expiresAt: response.expiresAt,
-      };
-
-      this.currentRoom.set(session);
-      await this.initializeLocalStream(config);
-      await this.setupPeerConnection();
-
-      this.connectionState.set('connected');
-      this.startCallTimer();
-
-      return session;
-    } catch (error: any) {
-      this.handleError('Error creating video room', error);
+      console.log('[VideoCall] Room session created:', response);
+    } catch (error: unknown) {
+      // If room already exists, that's fine - continue
+      const httpError = error as { status?: number; error?: { message?: string } };
+      if (httpError.status === 409) {
+        console.log('[VideoCall] Room already exists, continuing...');
+        return;
+      }
+      console.error('[VideoCall] Error creating room session:', error);
       throw error;
     }
   }
 
   /**
-   * Join an existing video room
+   * Monitor a room without joining with media (for doctor's waiting room panel)
+   * This allows the doctor to see who is in the waiting room without activating camera
    */
-  async joinRoom(citaId: number, guestCode?: string): Promise<VideoRoomSessionDto> {
+  async monitorRoom(citaId: number): Promise<void> {
     try {
       this.connectionState.set('connecting');
       this.error.set(null);
+      this.currentCitaId.set(citaId);
 
-      let response: any;
+      // 1. Create room session via REST API first
+      await this.createRoomSession(citaId);
 
-      if (guestCode) {
-        // Guest access (no authentication)
-        response = await this.http
-          .post(`${this.apiUrl}/video-rooms/${citaId}/join`, { guestCode })
-          .toPromise();
-      } else {
-        // Authenticated user access
-        response = await this.http.get(`${this.apiUrl}/video-rooms/${citaId}/join`).toPromise();
+      // 2. Connect to WebSocket (no media yet)
+      this.socketService.connect();
+
+      // 3. Wait for socket connection, then join room
+      return new Promise((resolve, reject) => {
+        const checkConnection = setInterval(() => {
+          if (this.socketService.isConnected()) {
+            clearInterval(checkConnection);
+            this.socketService.joinRoom(citaId);
+            this.connectionState.set('connected');
+            resolve();
+          }
+        }, 100);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkConnection);
+          if (!this.socketService.isConnected()) {
+            this.error.set('Failed to connect to video call server');
+            this.connectionState.set('error');
+            reject(new Error('Connection timeout'));
+          }
+        }, 10000);
+      });
+    } catch (error: unknown) {
+      console.error('[VideoCall] Error monitoring room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error connecting to room';
+      this.error.set(errorMessage);
+      this.connectionState.set('error');
+      throw error;
+    }
+  }
+
+  /**
+   * Join a video call room (with media)
+   * @param citaId - The appointment ID
+   * @param guestCode - Optional guest code for unauthenticated guests
+   * @param guestName - Optional guest name (required when guestCode is provided)
+   */
+  async joinRoom(citaId: number, guestCode?: string, guestName?: string): Promise<void> {
+    try {
+      this.connectionState.set('connecting');
+      this.error.set(null);
+      this.currentCitaId.set(citaId);
+
+      // 1. Create room session via REST API first (only for authenticated users)
+      // Guests don't create rooms - they join existing ones
+      const isGuest = !!guestCode && !this.authService.isAuthenticated();
+      if (!isGuest) {
+        await this.createRoomSession(citaId);
       }
 
-      const session: VideoRoomSessionDto = {
-        roomId: response.roomId,
-        sessionToken: response.sessionToken,
-        participantId: response.participantId,
-        participantRole: response.participantRole || 'guest',
-        iceServers: this.parseIceServers(response.iceServers),
-        participants: response.existingParticipants || [],
-        createdAt: new Date().toISOString(),
-        expiresAt: response.expiresAt,
-      };
-
-      this.currentRoom.set(session);
-      this.participants.set(response.existingParticipants || []);
-
+      // 2. Get local media stream
       await this.initializeLocalStream();
-      await this.setupPeerConnection();
 
-      // Start signaling
-      await this.startSignaling();
+      // 3. Connect to WebSocket (pass guestCode for guest authentication)
+      this.socketService.connect(isGuest ? guestCode : undefined);
 
-      this.connectionState.set('connected');
-      this.startCallTimer();
+      // 4. Wait for socket connection, then join room
+      const checkConnection = setInterval(() => {
+        if (this.socketService.isConnected()) {
+          clearInterval(checkConnection);
+          // Use appropriate join method based on whether user is a guest
+          if (isGuest && guestCode) {
+            this.socketService.joinRoomAsGuest(citaId, guestCode, guestName || 'Invitado');
+          } else {
+            this.socketService.joinRoom(citaId);
+          }
+        }
+      }, 100);
 
-      return session;
-    } catch (error: any) {
-      this.handleError('Error joining video room', error);
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkConnection);
+        if (!this.socketService.isConnected()) {
+          this.error.set('Failed to connect to video call server');
+          this.connectionState.set('error');
+        }
+      }, 10000);
+    } catch (error: unknown) {
+      console.error('[VideoCall] Error joining room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error joining video call';
+      this.error.set(errorMessage);
+      this.connectionState.set('error');
       throw error;
     }
   }
 
   /**
-   * Leave the current video room
+   * Leave the current video call
    */
   async leaveRoom(): Promise<void> {
-    try {
-      this.stopCallTimer();
-      this.stopHeartbeat();
+    const citaId = this.currentCitaId();
 
-      // Close all peer connections
-      this.peerConnections.forEach((pc) => pc.close());
-      this.peerConnections.clear();
+    // Stop call timer
+    this.stopCallTimer();
 
-      // Stop local stream
-      const localStream = this.localStream();
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-        this.localStream.set(null);
-      }
+    // Close all peer connections
+    this.peerConnections.forEach((_pc, odontollamaId) => {
+      this.closePeerConnection(odontollamaId);
+    });
 
-      // Notify backend if we're in a room
-      const currentRoom = this.currentRoom();
-      if (currentRoom) {
-        await this.http.delete(`${this.apiUrl}/video-rooms/${currentRoom.roomId}/end`).toPromise();
-      }
-
-      this.currentRoom.set(null);
-      this.participants.set([]);
-      this.connectionState.set('disconnected');
-    } catch (error: any) {
-      this.handleError('Error leaving room', error);
+    // Stop local stream
+    const localStream = this.localStream();
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      this.localStream.set(null);
     }
+
+    // Leave socket room
+    if (citaId) {
+      this.socketService.leaveRoom(citaId);
+    }
+
+    // Disconnect socket
+    this.socketService.disconnect();
+
+    // Reset state
+    this.remoteStreams.set(new Map());
+    this.chatMessages.set([]);
+    this.connectionState.set('disconnected');
+    this.currentCitaId.set(null);
   }
 
   // =====================================
-  // GUEST INVITATIONS
+  // PUBLIC METHODS - Media Controls
   // =====================================
 
   /**
-   * Generate guest invitation link
+   * Initialize local camera and microphone
    */
-  async generateGuestLink(
-    citaId: number,
-    guestData: GenerarInvitacionDto
-  ): Promise<GenerateGuestLinkResponseDto> {
+  async initializeLocalStream(): Promise<void> {
     try {
-      const response = await this.http
-        .post<GenerateGuestLinkResponseDto>(
-          `${this.apiUrl}/video-rooms/${citaId}/guest-link`,
-          guestData
-        )
-        .toPromise();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
 
-      return response!;
-    } catch (error: any) {
-      this.handleError('Error generating guest link', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Generate invitation using the other endpoint
-   */
-  async createInvitation(
-    citaId: number,
-    guestData: GenerarInvitacionDto
-  ): Promise<InvitacionResponseDto> {
-    try {
-      const response = await this.http
-        .post<InvitacionResponseDto>(
-          `${this.apiUrl}/invitaciones/${citaId}/generar-link-invitado`,
-          guestData
-        )
-        .toPromise();
-
-      return response!;
-    } catch (error: any) {
-      this.handleError('Error creating invitation', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Validate guest access code (public endpoint)
-   */
-  async validateGuestCode(code: string): Promise<GuestValidationDto> {
-    try {
-      const response = await this.http
-        .get<GuestValidationDto>(`${this.apiUrl}/invitaciones/invitado/${code}`)
-        .toPromise();
-
-      return response!;
-    } catch (error: any) {
-      this.handleError('Error validating guest code', error);
-      throw error;
-    }
-  }
-
-  // =====================================
-  // WEBRTC MEDIA CONTROLS
-  // =====================================
-
-  /**
-   * Initialize local media stream
-   */
-  async initializeLocalStream(config?: WebRTCServiceConfig): Promise<void> {
-    try {
-      const constraints: MediaStreamConstraints = {
-        video: config?.enableVideo ?? true,
-        audio: config?.enableAudio ?? true,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       this.localStream.set(stream);
+      this.isVideoEnabled.set(true);
+      this.isAudioEnabled.set(true);
 
-      // Update control states
-      this.isVideoEnabled.set(!!stream.getVideoTracks().length);
-      this.isAudioEnabled.set(!!stream.getAudioTracks().length);
-    } catch (error: any) {
-      this.handleError('Error accessing camera/microphone', error);
+      console.log('[VideoCall] Local stream initialized');
+    } catch (error: unknown) {
+      console.error('[VideoCall] Error getting media:', error);
+      this.error.set('Could not access camera/microphone');
       throw error;
     }
   }
@@ -307,15 +452,18 @@ export class VideoCallService {
     const stream = this.localStream();
     if (!stream) return;
 
-    const audioTracks = stream.getAudioTracks();
-    const newState = !this.isAudioEnabled();
-
-    audioTracks.forEach((track) => {
-      track.enabled = newState;
+    const enabled = !this.isAudioEnabled();
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = enabled;
     });
 
-    this.isAudioEnabled.set(newState);
-    this.broadcastAudioToggle(newState);
+    this.isAudioEnabled.set(enabled);
+
+    // Notify other participants
+    const citaId = this.currentCitaId();
+    if (citaId) {
+      this.socketService.toggleMic(citaId, enabled);
+    }
   }
 
   /**
@@ -325,365 +473,316 @@ export class VideoCallService {
     const stream = this.localStream();
     if (!stream) return;
 
-    const videoTracks = stream.getVideoTracks();
-    const newState = !this.isVideoEnabled();
-
-    videoTracks.forEach((track) => {
-      track.enabled = newState;
+    const enabled = !this.isVideoEnabled();
+    stream.getVideoTracks().forEach((track) => {
+      track.enabled = enabled;
     });
 
-    this.isVideoEnabled.set(newState);
-    this.broadcastVideoToggle(newState);
-  }
+    this.isVideoEnabled.set(enabled);
 
-  /**
-   * Start screen sharing
-   */
-  async startScreenShare(): Promise<void> {
-    try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
-
-      // Replace video track in all peer connections
-      this.peerConnections.forEach((pc) => {
-        const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-        if (sender) {
-          sender.replaceTrack(screenStream.getVideoTracks()[0]);
-        }
-      });
-
-      this.isScreenSharing.set(true);
-
-      // Handle screen sharing end
-      screenStream.getVideoTracks()[0].onended = () => {
-        this.stopScreenShare();
-      };
-    } catch (error: any) {
-      this.handleError('Error starting screen share', error);
+    // Notify other participants
+    const citaId = this.currentCitaId();
+    if (citaId) {
+      this.socketService.toggleCamera(citaId, enabled);
     }
   }
 
   /**
-   * Stop screen sharing
+   * Send a chat message
    */
-  async stopScreenShare(): Promise<void> {
-    try {
-      const localStream = this.localStream();
-      if (!localStream) return;
+  sendChatMessage(message: string): void {
+    const citaId = this.currentCitaId();
+    if (!citaId || !message.trim()) return;
 
-      // Restore original video track
-      this.peerConnections.forEach((pc) => {
-        const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-        if (sender && localStream.getVideoTracks()[0]) {
-          sender.replaceTrack(localStream.getVideoTracks()[0]);
-        }
-      });
-
-      this.isScreenSharing.set(false);
-    } catch (error: any) {
-      this.handleError('Error stopping screen share', error);
-    }
+    // Send message via WebSocket - it will be broadcast back to us
+    // No optimistic update to avoid duplicate messages
+    this.socketService.sendChatMessage(citaId, message);
   }
 
   // =====================================
-  // WEBRTC SIGNALING
+  // WEBRTC - Peer Connection Management
   // =====================================
 
   /**
-   * Send WebRTC signal to other participant
+   * Create a new RTCPeerConnection for a participant
    */
-  async sendSignal(toParticipantId: string, signalType: SignalType, payload: any): Promise<void> {
-    try {
-      const currentRoom = this.currentRoom();
-      if (!currentRoom) return;
+  private createPeerConnection(socketId: string): RTCPeerConnection {
+    const iceServers = this.socketService.iceServers();
+    const config: RTCConfiguration = {
+      ...RTC_CONFIG,
+      iceServers: iceServers.length > 0 ? iceServers : DEFAULT_ICE_SERVERS,
+    };
 
-      const signal: WebRtcSignalDto = {
-        to: toParticipantId,
-        from: currentRoom.participantId,
-        type: signalType,
-        payload,
-        timestamp: new Date().toISOString(),
-      };
+    const pc = new RTCPeerConnection(config);
 
-      await this.http
-        .post(`${this.apiUrl}/video-rooms/${currentRoom.roomId}/signal`, signal)
-        .toPromise();
-    } catch (error: any) {
-      this.handleError('Error sending signal', error);
-    }
-  }
-
-  /**
-   * Handle incoming WebRTC signal
-   */
-  async handleSignal(signal: WebRtcSignalDto): Promise<void> {
-    try {
-      switch (signal.type) {
-        case 'offer':
-          await this.handleOffer(signal.payload as RTCSessionDescriptionInit, signal.from);
-          break;
-        case 'answer':
-          await this.handleAnswer(signal.payload as RTCSessionDescriptionInit, signal.from);
-          break;
-        case 'ice-candidate':
-          await this.handleIceCandidate(signal.payload as RTCIceCandidateInit, signal.from);
-          break;
-      }
-    } catch (error: any) {
-      this.handleError('Error handling signal', error);
-    }
-  }
-
-  // =====================================
-  // CHAT MESSAGING
-  // =====================================
-
-  /**
-   * Send chat message
-   */
-  async sendChatMessage(message: string): Promise<void> {
-    try {
-      const currentRoom = this.currentRoom();
-      if (!currentRoom) return;
-
-      const chatMessage: ChatMessageDto = {
-        id: Date.now().toString(),
-        fromParticipantId: currentRoom.participantId,
-        fromParticipantName: 'You', // Will be set based on user profile
-        fromParticipantRole: currentRoom.participantRole,
-        message,
-        type: 'text',
-        timestamp: new Date().toISOString(),
-      };
-
-      // Send via backend signaling
-      await this.http
-        .post(`${this.apiUrl}/video-rooms/${currentRoom.roomId}/chat`, chatMessage)
-        .toPromise();
-
-      // Add to local messages immediately
-      this.chatMessages$.next(chatMessage);
-    } catch (error: any) {
-      this.handleError('Error sending chat message', error);
-    }
-  }
-
-  // =====================================
-  // PRIVATE HELPER METHODS
-  // =====================================
-
-  private parseIceServers(servers: any[]): RTCIceServer[] {
-    return servers.map((server) => ({
-      urls: server.urls,
-      username: server.username,
-      credential: server.credential,
-    }));
-  }
-
-  private async setupPeerConnection(): Promise<void> {
-    const currentRoom = this.currentRoom();
-    if (!currentRoom) return;
-
-    this.localPeerConnection = new RTCPeerConnection({
-      iceServers: currentRoom.iceServers,
-    });
-
-    // Add local stream tracks
+    // Add local tracks to the connection
     const localStream = this.localStream();
     if (localStream) {
       localStream.getTracks().forEach((track) => {
-        this.localPeerConnection?.addTrack(track, localStream);
+        pc.addTrack(track, localStream);
       });
     }
 
     // Handle ICE candidates
-    this.localPeerConnection.onicecandidate = (event) => {
+    pc.onicecandidate = (event) => {
       if (event.candidate) {
-        // This would be sent to all participants
-        // For now, we'll store it
-        console.log('ICE candidate generated:', event.candidate);
+        this.socketService.sendIceCandidate(socketId, event.candidate.toJSON());
       }
     };
 
-    // Handle remote streams
-    this.localPeerConnection.ontrack = (event) => {
-      console.log('Remote track received:', event.streams[0]);
-      // Handle remote stream display
+    // Handle remote tracks
+    pc.ontrack = (event) => {
+      console.log('[VideoCall] Remote track received from:', socketId);
+      const [remoteStream] = event.streams;
+      if (remoteStream) {
+        this.remoteStreams.update((streams) => {
+          const newStreams = new Map(streams);
+          newStreams.set(socketId, remoteStream);
+          return newStreams;
+        });
+      }
     };
 
     // Handle connection state changes
-    this.localPeerConnection.onconnectionstatechange = () => {
-      console.log('Connection state:', this.localPeerConnection?.connectionState);
-    };
-  }
-
-  private async handleOffer(
-    offer: RTCSessionDescriptionInit,
-    fromParticipantId: string
-  ): Promise<void> {
-    const pc = this.getOrCreatePeerConnection(fromParticipantId);
-    await pc.setRemoteDescription(offer);
-
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    await this.sendSignal(fromParticipantId, 'answer', answer);
-  }
-
-  private async handleAnswer(
-    answer: RTCSessionDescriptionInit,
-    fromParticipantId: string
-  ): Promise<void> {
-    const pc = this.peerConnections.get(fromParticipantId);
-    if (pc) {
-      await pc.setRemoteDescription(answer);
-    }
-  }
-
-  private async handleIceCandidate(
-    candidate: RTCIceCandidateInit,
-    fromParticipantId: string
-  ): Promise<void> {
-    const pc = this.peerConnections.get(fromParticipantId);
-    if (pc && pc.remoteDescription) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  }
-
-  private getOrCreatePeerConnection(participantId: string): RTCPeerConnection {
-    let pc = this.peerConnections.get(participantId);
-
-    if (!pc) {
-      const currentRoom = this.currentRoom();
-      pc = new RTCPeerConnection({
-        iceServers: currentRoom?.iceServers || [],
-      });
-
-      this.peerConnections.set(participantId, pc);
-
-      // Setup event handlers for this peer connection
-      this.setupPeerConnectionEvents(pc, participantId);
-    }
-
-    return pc;
-  }
-
-  private setupPeerConnectionEvents(pc: RTCPeerConnection, participantId: string): void {
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendSignal(participantId, 'ice-candidate', event.candidate);
+    pc.onconnectionstatechange = () => {
+      console.log(`[VideoCall] Connection state for ${socketId}:`, pc.connectionState);
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        // Could implement reconnection logic here
       }
     };
 
-    pc.ontrack = (event) => {
-      // Handle remote participant's media
-      console.log(`Remote track from ${participantId}:`, event.streams[0]);
-    };
-  }
-
-  private startSignaling(): void {
-    // Start WebSocket connection for real-time signaling
-    // This would connect to the WebSocket endpoint from backend
-    console.log('Starting real-time signaling...');
-  }
-
-  private broadcastAudioToggle(enabled: boolean): void {
-    // Notify other participants about audio state change
-    const currentRoom = this.currentRoom();
-    if (!currentRoom) return;
-
-    const event: RoomEventDto = {
-      type: 'participant-audio-toggled',
-      roomId: currentRoom.roomId,
-      participantId: currentRoom.participantId,
-      data: { enabled },
-      timestamp: new Date().toISOString(),
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[VideoCall] ICE connection state for ${socketId}:`, pc.iceConnectionState);
     };
 
-    this.roomEvents$.next(event);
+    this.peerConnections.set(socketId, pc);
+    return pc;
   }
 
-  private broadcastVideoToggle(enabled: boolean): void {
-    // Notify other participants about video state change
-    const currentRoom = this.currentRoom();
-    if (!currentRoom) return;
+  /**
+   * Close and cleanup a peer connection
+   */
+  private closePeerConnection(socketId: string): void {
+    const pc = this.peerConnections.get(socketId);
+    if (pc) {
+      pc.close();
+      this.peerConnections.delete(socketId);
+    }
 
-    const event: RoomEventDto = {
-      type: 'participant-video-toggled',
-      roomId: currentRoom.roomId,
-      participantId: currentRoom.participantId,
-      data: { enabled },
-      timestamp: new Date().toISOString(),
-    };
+    // Remove remote stream
+    this.remoteStreams.update((streams) => {
+      const newStreams = new Map(streams);
+      newStreams.delete(socketId);
+      return newStreams;
+    });
 
-    this.roomEvents$.next(event);
+    // Clear pending ICE candidates
+    this.pendingIceCandidates.delete(socketId);
   }
+
+  // =====================================
+  // WEBRTC - Signaling
+  // =====================================
+
+  /**
+   * Create and send an offer to a participant
+   */
+  private async createOffer(socketId: string): Promise<void> {
+    try {
+      const pc = this.createPeerConnection(socketId);
+
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
+
+      await pc.setLocalDescription(offer);
+
+      if (pc.localDescription) {
+        this.socketService.sendOffer(socketId, pc.localDescription);
+      }
+    } catch (error) {
+      console.error('[VideoCall] Error creating offer:', error);
+    }
+  }
+
+  /**
+   * Handle incoming offer and send answer
+   */
+  private async handleOffer(fromId: string, offer: RTCSessionDescriptionInit): Promise<void> {
+    try {
+      let pc = this.peerConnections.get(fromId);
+      if (!pc) {
+        pc = this.createPeerConnection(fromId);
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      // Add any pending ICE candidates
+      const pending = this.pendingIceCandidates.get(fromId);
+      if (pending) {
+        for (const candidate of pending) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+        this.pendingIceCandidates.delete(fromId);
+      }
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      if (pc.localDescription) {
+        this.socketService.sendAnswer(fromId, pc.localDescription);
+      }
+    } catch (error) {
+      console.error('[VideoCall] Error handling offer:', error);
+    }
+  }
+
+  /**
+   * Handle incoming answer
+   */
+  private async handleAnswer(fromId: string, answer: RTCSessionDescriptionInit): Promise<void> {
+    try {
+      const pc = this.peerConnections.get(fromId);
+      if (!pc) {
+        console.warn('[VideoCall] No peer connection for answer from:', fromId);
+        return;
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+      // Add any pending ICE candidates
+      const pending = this.pendingIceCandidates.get(fromId);
+      if (pending) {
+        for (const candidate of pending) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+        this.pendingIceCandidates.delete(fromId);
+      }
+    } catch (error) {
+      console.error('[VideoCall] Error handling answer:', error);
+    }
+  }
+
+  /**
+   * Handle incoming ICE candidate
+   */
+  private async handleIceCandidate(fromId: string, candidate: RTCIceCandidateInit): Promise<void> {
+    try {
+      const pc = this.peerConnections.get(fromId);
+
+      if (!pc || !pc.remoteDescription) {
+        // Queue the candidate until we have a remote description
+        const pending = this.pendingIceCandidates.get(fromId) || [];
+        pending.push(candidate);
+        this.pendingIceCandidates.set(fromId, pending);
+        return;
+      }
+
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (error) {
+      console.error('[VideoCall] Error handling ICE candidate:', error);
+    }
+  }
+
+  // =====================================
+  // TIMER
+  // =====================================
 
   private startCallTimer(): void {
     this.callStartTime = Date.now();
-    this.connectionTimer = setInterval(() => {
+    this.durationInterval = setInterval(() => {
       if (this.callStartTime) {
-        this.currentCallDuration.set(Math.floor((Date.now() - this.callStartTime) / 1000));
+        this.callDuration.set(Math.floor((Date.now() - this.callStartTime) / 1000));
       }
     }, 1000);
   }
 
   private stopCallTimer(): void {
-    if (this.connectionTimer) {
-      clearInterval(this.connectionTimer);
-      this.connectionTimer = null;
+    if (this.durationInterval) {
+      clearInterval(this.durationInterval);
+      this.durationInterval = null;
     }
     this.callStartTime = null;
-    this.currentCallDuration.set(0);
-  }
-
-  private startHeartbeat(): void {
-    // Send periodic keep-alive messages to maintain connection
-    this.heartbeatInterval = setInterval(() => {
-      // Send heartbeat to backend
-    }, 30000); // 30 seconds
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-  }
-
-  private handleError(message: string, error: any): void {
-    console.error(message, error);
-    this.error.set(`${message}: ${error?.message || error}`);
-
-    // Auto-leave room on critical errors
-    if (message.includes('critical') || message.includes('authentication')) {
-      setTimeout(() => this.leaveRoom(), 3000);
-    }
+    this.callDuration.set(0);
   }
 
   // =====================================
-  // PUBLIC GETTERS
+  // GUEST INVITATIONS (HTTP API)
   // =====================================
 
-  get isInCall(): boolean {
-    return this.connectionState() === 'connected';
+  /**
+   * Create an invitation link for a guest
+   * Returns LinkInvitacionDataDto with linkInvitacion, codigoAcceso, expiraEn
+   */
+  async createInvitation(
+    citaId: number,
+    guestData: GenerarInvitacionDto
+  ): Promise<LinkInvitacionDataDto> {
+    const response = await this.http
+      .post<{ data: LinkInvitacionDataDto }>(
+        `${this.apiUrl}/invitaciones/${citaId}/generar-link-invitado`,
+        guestData
+      )
+      .toPromise();
+
+    console.log('[VideoCall] Invitation response from backend:', response);
+
+    // Backend wraps response in { data: ... }
+    const data = response?.data || (response as unknown as LinkInvitacionDataDto);
+
+    // Ensure we have the required fields
+    const result: LinkInvitacionDataDto = {
+      linkInvitacion: data.linkInvitacion || '',
+      codigoAcceso: data.codigoAcceso || '',
+      expiraEn: data.expiraEn || '24 horas',
+      rolInvitado: data.rolInvitado || guestData.rolInvitado,
+    };
+
+    console.log('[VideoCall] Processed invitation:', result);
+
+    return result;
   }
 
-  get participantCount(): number {
-    return this.participants().length + (this.localStream() ? 1 : 0);
+  /**
+   * Validate a guest access code
+   */
+  async validateGuestCode(code: string): Promise<ValidacionInvitadoDataDto> {
+    const response = await this.http
+      .get<{ data: ValidacionInvitadoDataDto }>(`${this.apiUrl}/invitaciones/invitado/${code}`)
+      .toPromise();
+
+    // Backend wraps response in { data: ... }
+    return response?.data || (response as unknown as ValidacionInvitadoDataDto);
   }
 
-  get formattedCallDuration(): string {
-    const totalSeconds = this.currentCallDuration();
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+  // =====================================
+  // MEDICAL RECORD (HTTP API)
+  // =====================================
 
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  /**
+   * Create medical attention record after session ends
+   * POST /registro-atencion
+   */
+  async createRegistroAtencion(data: {
+    citaId: number;
+    diagnostico: string;
+    tratamiento: string;
+    recetas?: Array<{
+      medicamento: string;
+      dosis: string;
+      frecuencia: string;
+      duracion: string;
+      instrucciones?: string;
+    }>;
+    notas?: string;
+    proximaCitaRecomendada?: string;
+  }): Promise<unknown> {
+    const response = await this.http
+      .post<{ message: string; data: unknown }>(`${this.apiUrl}/registro-atencion`, data)
+      .toPromise();
+
+    console.log('[VideoCall] Medical record created:', response);
+    return response?.data;
   }
 }
