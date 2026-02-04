@@ -45,3 +45,23 @@ export const patientGuard: CanActivateFn = () => {
   // Si no es paciente ni tiene ambos roles, redirigir al dashboard del médico
   return router.createUrlTree(['/doctor/dashboard']);
 };
+
+/**
+ * Guard para rutas exclusivas de administradores
+ * Solo permite acceso si el usuario tiene rol de admin
+ */
+export const adminGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAdmin()) {
+    return true;
+  }
+
+  // Si no es admin, redirigir según su rol
+  if (authService.isDoctor()) {
+    return router.createUrlTree(['/doctor/dashboard']);
+  }
+
+  return router.createUrlTree(['/dashboard']);
+};
