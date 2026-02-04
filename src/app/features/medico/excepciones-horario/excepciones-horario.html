@@ -1,0 +1,317 @@
+<div class="p-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Excepciones de Horario</h1>
+      <p class="text-slate-500 mt-1">
+        Gestiona días bloqueados o con horarios especiales
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <a
+        routerLink="/doctor/profile"
+        class="px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+      >
+        Volver al Perfil
+      </a>
+      <button
+        (click)="openModal()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+      >
+        + Nueva Excepción
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <!-- Loading State -->
+  <div class="flex justify-center py-20">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+    ></div>
+  </div>
+  } @else if (error()) {
+  <!-- Error State -->
+  <div class="max-w-lg mx-auto text-center py-10">
+    <div class="bg-red-50 border-2 border-red-200 rounded-xl p-8">
+      <h3 class="text-xl font-bold text-red-800 mb-2">Error</h3>
+      <p class="text-red-700 mb-4">{{ error() }}</p>
+      <button
+        (click)="cargarExcepciones()"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+      >
+        Reintentar
+      </button>
+    </div>
+  </div>
+  } @else {
+  <!-- Content -->
+  <div class="max-w-4xl mx-auto">
+    @if (excepcionesOrdenadas().length > 0) {
+    <!-- Table -->
+    <div class="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="py-4 px-6 text-left font-semibold text-slate-700">
+                Fecha
+              </th>
+              <th class="py-4 px-6 text-left font-semibold text-slate-700">
+                Día
+              </th>
+              <th class="py-4 px-6 text-left font-semibold text-slate-700">
+                Horario
+              </th>
+              <th class="py-4 px-6 text-left font-semibold text-slate-700">
+                Motivo
+              </th>
+              <th class="py-4 px-6 text-center font-semibold text-slate-700">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            @for (ex of excepcionesOrdenadas(); track ex.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="py-4 px-6 text-slate-800 font-medium">
+                {{ formatFecha(ex.fecha) }}
+              </td>
+              <td class="py-4 px-6 text-slate-600">
+                {{ getDayName(ex.fecha) }}
+              </td>
+              <td class="py-4 px-6">
+                @if (ex.diaCompleto) {
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                >
+                  Día completo
+                </span>
+                } @else {
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"
+                >
+                  {{ formatHorario(ex) }}
+                </span>
+                }
+              </td>
+              <td class="py-4 px-6 text-slate-600 max-w-xs truncate">
+                {{ ex.motivo || '-' }}
+              </td>
+              <td class="py-4 px-6 text-center">
+                <button
+                  (click)="eliminarExcepcion(ex.id)"
+                  class="text-red-600 hover:text-red-800 font-medium text-sm transition-colors"
+                  title="Eliminar excepción"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-center text-slate-500 mt-4 text-sm">
+      Mostrando {{ excepcionesOrdenadas().length }} excepción(es) futura(s)
+    </p>
+    } @else {
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl border border-slate-300 p-12 text-center">
+      <div
+        class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-slate-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-slate-700 mb-2">
+        No hay excepciones
+      </h3>
+      <p class="text-slate-500 mb-6 max-w-md mx-auto">
+        No tienes excepciones de horario programadas. Puedes crear una para
+        bloquear días completos o franjas horarias específicas.
+      </p>
+      <button
+        (click)="openModal()"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+      >
+        Crear Primera Excepción
+      </button>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+<div
+  class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+  (click)="closeModal()"
+>
+  <div
+    class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <h3 class="text-xl font-bold text-slate-800 mb-4">
+      Nueva Excepción de Horario
+    </h3>
+
+    @if (formError()) {
+    <div
+      class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm"
+    >
+      {{ formError() }}
+    </div>
+    }
+
+    <form (submit)="guardarExcepcion(); $event.preventDefault()">
+      <!-- Fecha -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          Fecha <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="date"
+          name="fecha"
+          [ngModel]="fecha()"
+          (ngModelChange)="fecha.set($event)"
+          [min]="minDate"
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          required
+        />
+        <p class="text-xs text-slate-500 mt-1">Mínimo: desde mañana</p>
+      </div>
+
+      <!-- Tipo de bloqueo -->
+      <div class="mb-4">
+        <label class="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            name="bloquearDiaCompleto"
+            [ngModel]="bloquearDiaCompleto()"
+            (ngModelChange)="bloquearDiaCompleto.set($event)"
+            class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+          />
+          <span class="ml-2 text-sm text-slate-700">Bloquear día completo</span>
+        </label>
+      </div>
+
+      <!-- Horas (solo si no es día completo) -->
+      @if (!bloquearDiaCompleto()) {
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Hora inicio <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="time"
+            name="horaInicio"
+            [ngModel]="horaInicio()"
+            (ngModelChange)="horaInicio.set($event)"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Hora fin <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="time"
+            name="horaFin"
+            [ngModel]="horaFin()"
+            (ngModelChange)="horaFin.set($event)"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            required
+          />
+        </div>
+      </div>
+      }
+
+      <!-- Motivo -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          Motivo (opcional)
+        </label>
+        <input
+          type="text"
+          name="motivo"
+          [ngModel]="motivo()"
+          (ngModelChange)="motivo.set($event)"
+          placeholder="Ej: Reunión médica, capacitación, etc."
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="!puedeGuardar() || isSubmitting()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed font-medium transition-colors"
+        >
+          @if (isSubmitting()) {
+          <span class="flex items-center gap-2">
+            <svg
+              class="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Guardando...
+          </span>
+          } @else { Guardar }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

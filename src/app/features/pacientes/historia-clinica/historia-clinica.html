@@ -1,0 +1,411 @@
+<div class="min-h-screen bg-slate-50 p-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        @if (puedeVolver()) {
+          <h1 class="text-3xl font-bold text-slate-900">Historia Clínica del Paciente</h1>
+        } @else {
+          <h1 class="text-3xl font-bold text-slate-900">Mi Historia Clínica</h1>
+        }
+        <p class="text-slate-600 mt-1">Registro médico completo del paciente</p>
+      </div>
+      <div class="flex gap-3">
+        @if (puedeVolver()) {
+          <button
+            type="button"
+            (click)="volver()"
+            class="px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+          >
+            ← Volver
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="volver()"
+            class="px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+          >
+            ← Volver al Dashboard
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <!-- Loading State -->
+      <div class="flex flex-col items-center justify-center py-20">
+        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-600">Cargando historia clínica...</p>
+      </div>
+    } @else if (error()) {
+      <!-- Error State -->
+      <div class="bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
+        <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-xl font-bold text-red-800 mb-2">Error al cargar</h3>
+        <p class="text-red-700 mb-4">{{ error() }}</p>
+        <button
+          (click)="cargarHistoria()"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    } @else if (historia(); as h) {
+      @if (historiaNoExisteMessage(); as msg) {
+        <!-- No History Exists State -->
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-8 text-center">
+          <svg class="w-16 h-16 text-blue-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="text-xl font-bold text-blue-800 mb-2">Sin Historia Clínica</h3>
+          <p class="text-blue-700 mb-4">{{ msg }}</p>
+          @if (puedeVolver()) {
+            <button
+              (click)="volver()"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              ← Volver
+            </button>
+          } @else {
+            <button
+              (click)="volver()"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              Ir al Dashboard
+            </button>
+          }
+        </div>
+      } @else if (historiaExiste()) {
+        <!-- Content -->
+        <div class="space-y-6">
+        <!-- Patient Info Card -->
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-6">
+          <div class="flex items-start gap-6">
+            <!-- Avatar -->
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1">
+              <h2 class="text-2xl font-bold text-slate-900">{{ h.paciente?.nombreCompleto ?? 'Paciente' }}</h2>
+              <div class="flex flex-wrap gap-4 mt-2 text-sm text-slate-600">
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  {{ edad() ?? '--' }} años
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                  {{ h.paciente?.genero ?? 'No especificado' }}
+                </span>
+                @if (h.paciente?.tipoSangre) {
+                  <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                    Sangre: {{ h.paciente?.tipoSangre }}
+                  </span>
+                }
+                @if (h.paciente?.estiloVida) {
+                  <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
+                    {{ h.paciente?.estiloVida }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Stats Summary -->
+            @if (h.resumen) {
+              <div class="hidden md:flex gap-6 text-center">
+                <div class="bg-blue-50 rounded-xl p-4 min-w-[80px]">
+                  <p class="text-2xl font-bold text-blue-600">{{ h.resumen.totalCitas }}</p>
+                  <p class="text-xs text-slate-600">Citas</p>
+                </div>
+                <div class="bg-green-50 rounded-xl p-4 min-w-[80px]">
+                  <p class="text-2xl font-bold text-green-600">{{ h.resumen.totalRecetas }}</p>
+                  <p class="text-xs text-slate-600">Recetas</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-4 min-w-[80px]">
+                  <p class="text-2xl font-bold text-amber-600">{{ h.resumen.totalDocumentos }}</p>
+                  <p class="text-xs text-slate-600">Docs</p>
+                </div>
+                <div class="bg-red-50 rounded-xl p-4 min-w-[80px]">
+                  <p class="text-2xl font-bold text-red-600">{{ h.resumen.totalEnfermedades }}</p>
+                  <p class="text-xs text-slate-600">Condiciones</p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Last/Next Appointment Info -->
+          @if (h.resumen) {
+            <div class="flex flex-wrap gap-4 mt-6 pt-6 border-t border-slate-200">
+              @if (h.resumen.ultimaAtencion) {
+                <div class="flex items-center gap-2 text-sm text-slate-600">
+                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Última atención: <span class="font-medium">{{ formatFecha(h.resumen.ultimaAtencion) }}</span>
+                </div>
+              }
+              @if (h.resumen.proximaCita) {
+                <div class="flex items-center gap-2 text-sm text-slate-600">
+                  <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  Próxima cita: <span class="font-medium">{{ formatFecha(h.resumen.proximaCita) }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden">
+          <!-- Tab Navigation -->
+          <div class="flex border-b border-slate-200 overflow-x-auto">
+            <button
+              (click)="setTab('resumen')"
+              class="flex-1 px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap"
+              [class]="activeTab() === 'resumen' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+            >
+              Resumen
+            </button>
+            <button
+              (click)="setTab('citas')"
+              class="flex-1 px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap"
+              [class]="activeTab() === 'citas' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+            >
+              Citas ({{ h.citas?.length ?? 0 }})
+            </button>
+            <button
+              (click)="setTab('enfermedades')"
+              class="flex-1 px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap"
+              [class]="activeTab() === 'enfermedades' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+            >
+              Condiciones ({{ h.enfermedades?.length ?? 0 }})
+            </button>
+            <button
+              (click)="setTab('documentos')"
+              class="flex-1 px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap"
+              [class]="activeTab() === 'documentos' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+            >
+              Documentos ({{ h.documentos?.length ?? 0 }})
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="p-6">
+            @switch (activeTab()) {
+              <!-- Resumen Tab -->
+              @case ('resumen') {
+                <div class="space-y-6">
+                  <!-- Citas Recientes -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      Últimas Citas
+                    </h3>
+                    @if ((h.citas?.length ?? 0) > 0) {
+                      <div class="space-y-3">
+                        @for (cita of (h.citas ?? []).slice(0, 3); track cita.id) {
+                          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div class="flex items-start justify-between">
+                              <div>
+                                <p class="font-medium text-slate-900">{{ cita.medicoNombre }}</p>
+                                <p class="text-sm text-slate-600">{{ cita.medicoEspecialidad }}</p>
+                                <p class="text-xs text-slate-500 mt-1">{{ formatFechaHora(cita.fecha) }}</p>
+                              </div>
+                              <span
+                                class="px-2 py-1 rounded-full text-xs font-medium"
+                                [class]="cita.estado === 'Atendida' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+                              >
+                                {{ cita.estado }}
+                              </span>
+                            </div>
+                            @if (cita.diagnostico) {
+                              <p class="text-sm text-slate-700 mt-2 p-2 bg-white rounded border border-slate-200">
+                                <span class="font-medium">Diagnóstico:</span> {{ cita.diagnostico }}
+                              </p>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="text-slate-500 text-center py-4">No hay citas registradas</p>
+                    }
+                  </div>
+
+                  <!-- Condiciones Médicas -->
+                  @if ((h.enfermedades?.length ?? 0) > 0) {
+                    <div>
+                      <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        Condiciones Médicas
+                      </h3>
+                      <div class="flex flex-wrap gap-2">
+                        @for (enf of (h.enfermedades ?? []); track enf.nombre) {
+                          <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                            <p class="font-medium text-red-800 text-sm">{{ enf.nombre }}</p>
+                            <p class="text-xs text-red-600">{{ enf.tipo }}</p>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Citas Tab -->
+              @case ('citas') {
+                @if ((h.citas?.length ?? 0) > 0) {
+                  <div class="space-y-4">
+                    @for (cita of (h.citas ?? []); track cita.id) {
+                      <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <div class="flex items-start justify-between mb-3">
+                          <div>
+                            <p class="font-semibold text-slate-900 text-lg">{{ cita.medicoNombre }}</p>
+                            <p class="text-slate-600">{{ cita.medicoEspecialidad }}</p>
+                          </div>
+                          <div class="text-right">
+                            <p class="text-sm font-medium text-slate-900">{{ formatFecha(cita.fecha) }}</p>
+                            <span
+                              class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium"
+                              [class]="cita.estado === 'Atendida' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+                            >
+                              {{ cita.estado }}
+                            </span>
+                          </div>
+                        </div>
+
+                        @if (cita.diagnostico) {
+                          <div class="mb-3 p-3 bg-white rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-700">Diagnóstico:</p>
+                            <p class="text-slate-600">{{ cita.diagnostico }}</p>
+                          </div>
+                        }
+
+                        @if (cita.observaciones) {
+                          <div class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <p class="text-sm font-medium text-blue-800">Observaciones:</p>
+                            <p class="text-blue-700">{{ cita.observaciones }}</p>
+                          </div>
+                        }
+
+                        @if (cita.tieneReceta && cita.receta) {
+                          <div class="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
+                            <div class="flex items-center gap-2 mb-3">
+                              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                              </svg>
+                              <p class="font-semibold text-green-800">Receta Médica</p>
+                            </div>
+                            @if (cita.receta.observaciones) {
+                              <p class="text-sm text-green-700 mb-3">{{ cita.receta.observaciones }}</p>
+                            }
+                            <div class="space-y-2">
+                              @for (med of cita.receta.medicamentos; track med.nombre) {
+                                <div class="bg-white rounded-lg p-3 border border-green-200">
+                                  <div class="flex justify-between items-start">
+                                    <div>
+                                      <p class="font-medium text-slate-900">{{ med.nombre }}</p>
+                                      <p class="text-sm text-slate-600">{{ med.viaAdministracion }} - {{ med.frecuencia }}</p>
+                                    </div>
+                                    <span class="text-sm font-medium text-green-700">{{ med.duracion }}</span>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="text-slate-500">No hay citas registradas</p>
+                  </div>
+                }
+              }
+
+              <!-- Enfermedades Tab -->
+              @case ('enfermedades') {
+                @if ((h.enfermedades?.length ?? 0) > 0) {
+                  <div class="grid gap-4 md:grid-cols-2">
+                    @for (enf of (h.enfermedades ?? []); track enf.nombre) {
+                      <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <div class="flex items-start gap-3">
+                          <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                          </div>
+                          <div class="flex-1">
+                            <h4 class="font-semibold text-slate-900">{{ enf.nombre }}</h4>
+                            <p class="text-sm text-slate-600">{{ enf.tipo }}</p>
+                            @if (enf.observaciones) {
+                              <p class="text-sm text-slate-500 mt-2 italic">{{ enf.observaciones }}</p>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-slate-500">No hay condiciones médicas registradas</p>
+                  </div>
+                }
+              }
+
+              <!-- Documentos Tab -->
+              @case ('documentos') {
+                @if ((h.documentos?.length ?? 0) > 0) {
+                  <div class="grid gap-3">
+                    @for (doc of (h.documentos ?? []); track doc.id) {
+                      <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">
+                          {{ getDocumentIcon(doc.tipo) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="font-medium text-slate-900 truncate">{{ doc.titulo }}</p>
+                          <div class="flex items-center gap-2 text-sm text-slate-600">
+                            <span class="px-2 py-0.5 bg-slate-200 rounded text-xs">{{ doc.tipo }}</span>
+                            <span>{{ formatFecha(doc.fechaSubida) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="text-slate-500">No hay documentos registrados</p>
+                  </div>
+                }
+              }
+            }
+          </div>
+        </div>
+      </div>
+      }
+    }
+  </div>
+</div>

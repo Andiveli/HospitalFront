@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import {
   type CitaDetalladaResponseDto,
   formatMedicoNombreSimplificado,
+  type PacienteEnfermedadDto,
 } from '../../../../core/models';
 import type { GenerarInvitacionDto } from '../../../../core/models/video-call.models';
 import { CitasService } from '../../../../core/services/citas.service';
@@ -21,11 +22,12 @@ import {
   hasAppointmentExpired,
   isAppointmentTimeReady,
 } from '../../../../core/utils/appointment-time.utils';
+import AgregarEnfermedadComponent from '../../../../shared/components/agregar-enfermedad/agregar-enfermedad.component';
 import EditCitaModalComponent from '../../../../shared/components/edit-cita-modal/edit-cita-modal.component';
 
 @Component({
   selector: 'app-detalle-cita',
-  imports: [CommonModule, EditCitaModalComponent],
+  imports: [CommonModule, EditCitaModalComponent, AgregarEnfermedadComponent],
   templateUrl: './detalle-cita.component.html',
   styleUrl: './detalle-cita.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,7 @@ export default class DetalleCitaComponent {
   cita = signal<CitaDetalladaResponseDto | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
+  pacienteId = signal<number | null>(null);
 
   // UI State
   showCancelConfirm = signal(false);
@@ -66,6 +69,14 @@ export default class DetalleCitaComponent {
       const citaId = this.id();
       if (citaId) {
         this.loadCitaDetalle();
+      }
+    });
+
+    // Extraer pacienteId cuando se carga la cita
+    effect(() => {
+      const cita = this.cita();
+      if (cita?.paciente?.id) {
+        this.pacienteId.set(cita.paciente.id);
       }
     });
   }
@@ -289,5 +300,27 @@ export default class DetalleCitaComponent {
     if (citaId) {
       this.router.navigate(['/doctor/registro-atencion', citaId]);
     }
+  }
+
+  // Navigate to patient's medical history
+  verHistoriaClinicaPaciente(): void {
+    const pacienteId = this.pacienteId();
+    if (pacienteId) {
+      this.router.navigate(['/doctor/historia-clinica', pacienteId]);
+    }
+  }
+
+  // =====================================
+  // METHODS - Enfermedad
+  // =====================================
+
+  /** Handler cuando se agrega una enfermedad exitosamente */
+  onEnfermedadAgregada(enfermedad: PacienteEnfermedadDto): void {
+    // La respuesta puede tener estructura anidada o plana
+    const nombreEnfermedad = enfermedad.enfermedad?.nombre ?? 'Nueva enfermedad';
+    this.successMessage.set(`"${nombreEnfermedad}" registrada exitosamente`);
+
+    // Limpiar mensaje después de 3 segundos
+    setTimeout(() => this.successMessage.set(null), 3000);
   }
 }

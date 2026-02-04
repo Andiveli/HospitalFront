@@ -185,9 +185,10 @@
 
     <div class="grid grid-cols-3 gap-4">
       @for (accion of accionesRapidas; track accion.route) {
-        <a
-          [routerLink]="accion.route"
-          class="bg-white rounded-2xl border-2 border-slate-200 p-6 hover:border-slate-300 hover:shadow-md transition cursor-pointer"
+        <button
+          type="button"
+          (click)="navegarA(accion.route)"
+          class="bg-white rounded-2xl border-2 border-slate-200 p-6 hover:border-slate-300 hover:shadow-md transition cursor-pointer text-left"
         >
           <div
             class="flex flex-col items-center justify-center text-center gap-3"
@@ -243,7 +244,7 @@
               accion.titulo
             }}</span>
           </div>
-        </a>
+        </button>
       }
     </div>
   </div>

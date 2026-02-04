@@ -233,6 +233,26 @@
           </span>
         }
       </button>
+
+      <!-- Finalizar Consulta Button (Solo para médicos) -->
+      @if (isDoctor()) {
+        <div class="h-10 w-px bg-gray-300 mx-2"></div>
+        <button
+          (click)="finalizarConsulta()"
+          [disabled]="finalizarLoading()"
+          class="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-green-600 bg-green-600 text-white hover:bg-green-700 hover:border-green-700 transition-all disabled:bg-green-400 disabled:border-green-400 disabled:cursor-not-allowed"
+        >
+          @if (finalizarLoading()) {
+            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span class="font-medium">Finalizando...</span>
+          } @else {
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-medium">Finalizar Consulta</span>
+          }
+        </button>
+      }
     </div>
   </footer>
 </div>

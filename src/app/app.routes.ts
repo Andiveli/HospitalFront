@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { authGuard, doctorGuard, patientGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, doctorGuard, patientGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // ==========================================
@@ -27,6 +27,22 @@ export const routes: Routes = [
             (m) => m.ForgotPasswordComponent
           ),
         title: 'Recuperar Contraseña - Hospital App',
+      },
+      {
+        path: 'confirmar/:token',
+        loadComponent: () =>
+          import('./features/auth/confirm-email/confirm-email.component').then(
+            (m) => m.ConfirmEmailComponent
+          ),
+        title: 'Confirmar Email - Hospital App',
+      },
+      {
+        path: 'reset-password/:token',
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password.component').then(
+            (m) => m.ResetPasswordComponent
+          ),
+        title: 'Restablecer Contraseña - Hospital App',
       },
       {
         path: '',
@@ -63,6 +79,67 @@ export const routes: Routes = [
     path: 'debug',
     loadComponent: () => import('./features/debug/debug.component'),
     title: 'Debug - Hospital App',
+  },
+
+  // ==========================================
+  // Rutas Protegidas - Con Layout de Admin (Mayor prioridad)
+  // ==========================================
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
+    canActivate: [authGuard, adminGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/admin/dashboard/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent
+          ),
+        title: 'Dashboard - Panel Admin',
+      },
+      {
+        path: 'medicos',
+        loadComponent: () =>
+          import('./features/admin/medicos/admin-medicos.component').then(
+            (m) => m.AdminMedicosComponent
+          ),
+        title: 'Médicos - Panel Admin',
+      },
+      {
+        path: 'pacientes',
+        loadComponent: () =>
+          import('./features/admin/pacientes/admin-pacientes.component').then(
+            (m) => m.AdminPacientesComponent
+          ),
+        title: 'Pacientes - Panel Admin',
+      },
+      {
+        path: 'citas',
+        loadComponent: () =>
+          import('./features/admin/citas/admin-citas.component').then((m) => m.AdminCitasComponent),
+        title: 'Citas - Panel Admin',
+      },
+      {
+        path: 'medicamentos',
+        loadComponent: () =>
+          import('./features/admin/medicamentos/admin-medicamentos.component').then(
+            (m) => m.AdminMedicamentosComponent
+          ),
+        title: 'Medicamentos - Panel Admin',
+      },
+      {
+        path: 'otros',
+        loadComponent: () =>
+          import('./features/admin/otros/admin-otros.component').then((m) => m.AdminOtrosComponent),
+        title: 'Otros - Panel Admin',
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+    ],
   },
 
   // ==========================================
@@ -112,6 +189,22 @@ export const routes: Routes = [
             (m) => m.PerfilProfesionalComponent
           ),
         title: 'Perfil Profesional - Portal Médico',
+      },
+      {
+        path: 'doctor/excepciones-horario',
+        loadComponent: () =>
+          import('./features/medico/excepciones-horario/excepciones-horario.component').then(
+            (m) => m.ExcepcionesHorarioComponent
+          ),
+        title: 'Excepciones de Horario - Portal Médico',
+      },
+      {
+        path: 'doctor/historia-clinica/:pacienteId',
+        loadComponent: () =>
+          import('./features/pacientes/historia-clinica/historia-clinica.component').then(
+            (m) => m.HistoriaClinicaComponent
+          ),
+        title: 'Historia Clínica del Paciente - Portal Médico',
       },
       {
         path: 'doctor/ajustes',
@@ -234,6 +327,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/pacientes/recetas/recetas.component').then((m) => m.RecetasComponent),
         title: 'Mis Recetas - Hospital App',
+      },
+      {
+        path: 'historia-clinica',
+        loadComponent: () =>
+          import('./features/pacientes/historia-clinica/historia-clinica.component').then(
+            (m) => m.HistoriaClinicaComponent
+          ),
+        title: 'Historia Clínica - Hospital App',
       },
       {
         path: 'ajustes',

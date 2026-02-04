@@ -1,8 +1,4 @@
-import {
-  HttpClient,
-  type HttpErrorResponse,
-  HttpParams,
-} from '@angular/common/http';
+import { HttpClient, type HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -69,8 +65,8 @@ export class CitasService {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/paciente/proximas`,
-        ),
+          `${this.baseUrl}/paciente/proximas`
+        )
       );
       return response.data || [];
     } catch {
@@ -86,8 +82,8 @@ export class CitasService {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/paciente/recientes`,
-        ),
+          `${this.baseUrl}/paciente/recientes`
+        )
       );
       return response.data || [];
     } catch {
@@ -99,20 +95,15 @@ export class CitasService {
    * Get all pending appointments with pagination (para pacientes)
    * GET /citas/paciente/pendientes?page=1&limit=10
    */
-  async getPendientesCitas(
-    params: PaginationParams,
-  ): Promise<PaginatedResponse<CitaResponseDto>> {
+  async getPendientesCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
     const httpParams = new HttpParams()
       .set('page', params.page.toString())
       .set('limit', params.limit.toString());
 
     return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(
-        `${this.baseUrl}/paciente/pendientes`,
-        {
-          params: httpParams,
-        },
-      ),
+      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/paciente/pendientes`, {
+        params: httpParams,
+      })
     );
   }
 
@@ -120,20 +111,15 @@ export class CitasService {
    * Get all attended appointments with pagination (para pacientes)
    * GET /citas/paciente/atendidas?page=1&limit=10
    */
-  async getAtendidasCitas(
-    params: PaginationParams,
-  ): Promise<PaginatedResponse<CitaResponseDto>> {
+  async getAtendidasCitas(params: PaginationParams): Promise<PaginatedResponse<CitaResponseDto>> {
     const httpParams = new HttpParams()
       .set('page', params.page.toString())
       .set('limit', params.limit.toString());
 
     return firstValueFrom(
-      this.http.get<PaginatedResponse<CitaResponseDto>>(
-        `${this.baseUrl}/paciente/atendidas`,
-        {
-          params: httpParams,
-        },
-      ),
+      this.http.get<PaginatedResponse<CitaResponseDto>>(`${this.baseUrl}/paciente/atendidas`, {
+        params: httpParams,
+      })
     );
   }
 
@@ -145,8 +131,8 @@ export class CitasService {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/medico/proximas`,
-        ),
+          `${this.baseUrl}/medico/proximas`
+        )
       );
       return response.data || [];
     } catch {
@@ -161,9 +147,7 @@ export class CitasService {
   async getAllCitasMedico(): Promise<CitaResponseDto[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/medico/all`,
-        ),
+        this.http.get<{ message: string; data: CitaResponseDto[] }>(`${this.baseUrl}/medico/all`)
       );
       return response.data || [];
     } catch {
@@ -179,8 +163,8 @@ export class CitasService {
     try {
       const response = await firstValueFrom(
         this.http.get<{ message: string; data: CitaResponseDto[] }>(
-          `${this.baseUrl}/medico/fecha?fecha=${fecha}`,
-        ),
+          `${this.baseUrl}/medico/fecha?fecha=${fecha}`
+        )
       );
       return response.data || [];
     } catch {
@@ -195,8 +179,8 @@ export class CitasService {
   async getCitaDetalle(id: number): Promise<CitaDetalladaResponseDto> {
     const response = await firstValueFrom(
       this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(
-        `${this.baseUrl}/paciente/${id}`,
-      ),
+        `${this.baseUrl}/paciente/${id}`
+      )
     );
     return response.data;
   }
@@ -208,8 +192,8 @@ export class CitasService {
   async getCitaDetalleMedico(id: number): Promise<CitaDetalladaResponseDto> {
     const response = await firstValueFrom(
       this.http.get<{ message: string; data: CitaDetalladaResponseDto }>(
-        `${this.baseUrl}/medico/${id}`,
-      ),
+        `${this.baseUrl}/medico/${id}`
+      )
     );
     return response.data;
   }
@@ -222,11 +206,7 @@ export class CitasService {
     return firstValueFrom(
       this.http
         .post<CitaResponseDto>(`${this.baseUrl}/paciente`, dto)
-        .pipe(
-          catchError((error: HttpErrorResponse) =>
-            throwError(() => this.handleError(error)),
-          ),
-        ),
+        .pipe(catchError((error: HttpErrorResponse) => throwError(() => this.handleError(error))))
     );
   }
 
@@ -242,11 +222,7 @@ export class CitasService {
     return firstValueFrom(
       this.http
         .put<CitaResponseDto>(`${this.baseUrl}/paciente/${id}`, dto)
-        .pipe(
-          catchError((error: HttpErrorResponse) =>
-            throwError(() => this.handleError(error)),
-          ),
-        ),
+        .pipe(catchError((error: HttpErrorResponse) => throwError(() => this.handleError(error))))
     );
   }
 
@@ -262,11 +238,27 @@ export class CitasService {
     return firstValueFrom(
       this.http
         .delete<{ message: string }>(`${this.baseUrl}/paciente/${id}`)
-        .pipe(
-          catchError((error: HttpErrorResponse) =>
-            throwError(() => this.handleError(error)),
-          ),
-        ),
+        .pipe(catchError((error: HttpErrorResponse) => throwError(() => this.handleError(error))))
+    );
+  }
+
+  /**
+   * Finalizar una consulta médica (para médicos)
+   * POST /citas/medico/:id/finalizar
+   *
+   * Restricciones:
+   * - Solo citas pendientes pueden ser finalizadas
+   * - El médico debe estar autenticado
+   * - La cita debe estar en curso o lista para atención
+   */
+  async finalizarConsultaMedica(id: number): Promise<{ message: string; data: CitaResponseDto }> {
+    return firstValueFrom(
+      this.http
+        .post<{ message: string; data: CitaResponseDto }>(
+          `${this.baseUrl}/medico/${id}/finalizar`,
+          {}
+        )
+        .pipe(catchError((error: HttpErrorResponse) => throwError(() => this.handleError(error))))
     );
   }
 
@@ -277,8 +269,7 @@ export class CitasService {
   canModifyCita(fechaHoraInicio: string): boolean {
     const citaDate = new Date(fechaHoraInicio);
     const now = new Date();
-    const hoursUntilCita =
-      (citaDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursUntilCita = (citaDate.getTime() - now.getTime()) / (1000 * 60 * 60);
     return hoursUntilCita >= 72;
   }
 

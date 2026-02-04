@@ -131,7 +131,7 @@
       <p class="text-xs text-slate-500 mb-3 text-center">Enfermedades</p>
 
       @if (userData.enfermedades.length > 0) {
-      <div class="space-y-2 mb-4">
+      <div class="space-y-2">
         @for ( enfermedad of userData.enfermedades; track enfermedad.nombre ) {
         <p class="text-base font-semibold text-slate-900 text-center">
           {{ enfermedad.nombre }} -
@@ -140,19 +140,10 @@
         }
       </div>
       } @else {
-      <p class="text-slate-500 text-center mb-4">
+      <p class="text-slate-500 text-center">
         No hay enfermedades registradas
       </p>
       }
-
-      <div class="flex justify-center">
-        <button
-          type="button"
-          class="px-4 py-2 border-2 border-slate-300 rounded-full text-sm text-slate-700 hover:bg-slate-50 transition"
-        >
-          Agregar Enfermedad
-        </button>
-      </div>
     </div>
 
     <!-- Right Column: Sangre + Estilo -->

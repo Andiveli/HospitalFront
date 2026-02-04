@@ -1,0 +1,266 @@
+<div class="p-8">
+  <!-- Header con saludo -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-900">
+      {{ getGreeting() }}, {{ user()?.nombreCompleto?.split(' ')?.[0] ?? 'Admin' }}
+    </h1>
+    <p class="text-slate-600 mt-1">Panel de administración del sistema</p>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-20">
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-slate-600">Cargando dashboard...</p>
+      </div>
+    </div>
+  } @else {
+    <!-- Error State -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-red-700">{{ error() }}</p>
+          <button 
+            (click)="loadDashboardData()"
+            class="ml-auto text-red-600 hover:text-red-800 font-medium"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Citas Atendidas -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-600">Citas Atendidas</p>
+            <p class="text-2xl font-bold text-slate-900">{{ stats().citasAtendidas }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Citas Pendientes -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-600">Citas Pendientes</p>
+            <p class="text-2xl font-bold text-slate-900">{{ stats().citasPendientes }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Médicos -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-600">Médicos</p>
+            <p class="text-2xl font-bold text-slate-900">{{ stats().totalMedicos }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Pacientes -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-600">Pacientes</p>
+            <p class="text-2xl font-bold text-slate-900">{{ stats().totalPacientes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Panel de Excepciones de Horario -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div class="p-6 border-b border-slate-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-slate-900">Excepciones de Horario</h2>
+                <p class="text-sm text-slate-600">Solicitudes de ausencia de médicos</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 text-sm font-medium rounded-full bg-orange-100 text-orange-700">
+              {{ totalExcepcionesFuturas() }} pendientes
+            </span>
+          </div>
+        </div>
+
+        <div class="p-6 max-h-96 overflow-y-auto">
+          @if (excepcionesFuturas().length === 0) {
+            <div class="text-center py-8">
+              <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-slate-500">No hay excepciones de horario pendientes</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (medicoData of excepcionesFuturas(); track medicoData.medico.id) {
+                <div class="border border-slate-200 rounded-xl p-4">
+                  <!-- Médico Header -->
+                  <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-medium text-slate-900">{{ medicoData.medico.nombreCompleto }}</p>
+                      <p class="text-sm text-slate-500">{{ medicoData.medico.especialidad }}</p>
+                    </div>
+                    <span class="text-sm text-slate-500">
+                      {{ medicoData.excepciones.length }} excepción{{ medicoData.excepciones.length > 1 ? 'es' : '' }}
+                    </span>
+                  </div>
+
+                  <!-- Excepciones List -->
+                  <div class="space-y-2 pl-13">
+                    @for (excepcion of medicoData.excepciones; track excepcion.id) {
+                      <div class="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                        <div>
+                          <p class="text-sm font-medium text-slate-700">{{ formatFecha(excepcion.fecha) }}</p>
+                          <p class="text-xs text-slate-500">{{ formatHorario(excepcion) }}</p>
+                          @if (excepcion.motivo) {
+                            <p class="text-xs text-slate-600 mt-1 italic">"{{ excepcion.motivo }}"</p>
+                          }
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button 
+                            class="p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg transition"
+                            title="Aprobar"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button 
+                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+                            title="Rechazar"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Accesos Rápidos -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div class="p-6 border-b border-slate-200">
+          <h2 class="text-lg font-semibold text-slate-900">Accesos Rápidos</h2>
+          <p class="text-sm text-slate-600">Gestión del sistema</p>
+        </div>
+
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Médicos -->
+            <a
+              routerLink="/admin/medicos"
+              class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition group"
+            >
+              <div class="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
+                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="font-medium text-slate-700 group-hover:text-purple-700">Médicos</span>
+            </a>
+
+            <!-- Pacientes -->
+            <a
+              routerLink="/admin/pacientes"
+              class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition group"
+            >
+              <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition">
+                <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <span class="font-medium text-slate-700 group-hover:text-purple-700">Pacientes</span>
+            </a>
+
+            <!-- Citas -->
+            <a
+              routerLink="/admin/citas"
+              class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition group"
+            >
+              <div class="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition">
+                <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span class="font-medium text-slate-700 group-hover:text-purple-700">Citas</span>
+            </a>
+
+            <!-- Medicamentos -->
+            <a
+              routerLink="/admin/medicamentos"
+              class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition group"
+            >
+              <div class="w-14 h-14 rounded-xl bg-rose-100 flex items-center justify-center group-hover:bg-rose-200 transition">
+                <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <span class="font-medium text-slate-700 group-hover:text-purple-700">Medicamentos</span>
+            </a>
+          </div>
+
+          <!-- Ver Todos -->
+          <a
+            routerLink="/admin/otros"
+            class="mt-4 flex items-center justify-center gap-2 w-full py-3 border-2 border-slate-200 rounded-xl text-slate-600 hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700 transition"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+            </svg>
+            <span class="font-medium">Otras opciones</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import type { MedicoDataDto } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -16,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
  */
 @Component({
   selector: 'app-perfil-profesional',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './perfil-profesional.html',
   styles: [
@@ -29,9 +24,6 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class PerfilProfesionalComponent {
   readonly authService = inject(AuthService);
-
-  // Estado
-  readonly mostrarModalExcepcion = signal(false);
 
   // Extraer datos del médico desde el wrapper { message, data }
   readonly medico = computed<MedicoDataDto | null>(() => {

@@ -1,0 +1,101 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+  <div class="w-full max-w-md">
+    <div class="bg-slate-800 rounded-lg shadow-xl p-8 text-center">
+      <!-- Loading State -->
+      @if (state() === 'loading') {
+        <div class="py-8">
+          <div
+            class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"
+          ></div>
+          <h1 class="text-2xl font-bold text-white mb-2">Confirmando tu cuenta...</h1>
+          <p class="text-slate-400">Por favor esperá un momento</p>
+        </div>
+      }
+
+      <!-- Success State -->
+      @if (state() === 'success') {
+        <div class="py-8">
+          <!-- Success Icon -->
+          <div
+            class="w-20 h-20 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <svg
+              class="w-10 h-10 text-green-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+
+          <h1 class="text-2xl font-bold text-white mb-2">¡Cuenta Confirmada!</h1>
+          <p class="text-slate-400 mb-6">{{ message() }}</p>
+
+          <p class="text-slate-500 text-sm mb-6">
+            Serás redirigido al login en unos segundos...
+          </p>
+
+          <button
+            (click)="goToLogin()"
+            class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+          >
+            Ir a Iniciar Sesión
+          </button>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (state() === 'error') {
+        <div class="py-8">
+          <!-- Error Icon -->
+          <div
+            class="w-20 h-20 bg-red-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <svg
+              class="w-10 h-10 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </div>
+
+          <h1 class="text-2xl font-bold text-white mb-2">Error de Confirmación</h1>
+          <p class="text-slate-400 mb-6">{{ message() }}</p>
+
+          <div class="space-y-3">
+            <button
+              (click)="goToLogin()"
+              class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+            >
+              Ir a Iniciar Sesión
+            </button>
+
+            <button
+              (click)="goToRegister()"
+              class="w-full py-3 px-4 bg-transparent border border-slate-600 hover:border-slate-500 text-slate-300 font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+            >
+              Registrarse de nuevo
+            </button>
+          </div>
+
+          <p class="text-slate-500 text-sm mt-6">
+            Si el problema persiste, contactá a soporte.
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

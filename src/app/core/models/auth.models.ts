@@ -16,6 +16,7 @@ export interface AuthResponseDto {
 }
 
 // Signup Request
+// Backend expects: passwordHash (not password), confirmPassword (not confirmarPassword)
 export interface SignupDto {
   cedula: string;
   primerNombre: string;
@@ -23,8 +24,8 @@ export interface SignupDto {
   primerApellido: string;
   segundoApellido?: string;
   email: string;
-  password: string;
-  confirmarPassword: string;
+  passwordHash: string; // Backend expects 'passwordHash'
+  confirmPassword: string; // Backend expects 'confirmPassword'
   genero: number; // 1 = Masculino, 2 = Femenino, 3 = Otro
 }
 
@@ -119,8 +120,10 @@ export interface ForgotPasswordDto {
   email: string;
 }
 
+// Reset password (POST /auth/recuperar-password/{token})
 export interface ResetPasswordDto {
   password: string;
+  confirmPassword: string;
 }
 
 // Change Password

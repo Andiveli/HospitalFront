@@ -125,12 +125,51 @@ export interface UpdateMedicoPerfilDto {
 
 /**
  * Excepción de horario (para días especiales)
+ * GET /excepciones-horario/medico/mis-excepciones
  */
 export interface ExcepcionHorarioDto {
   id: number;
   fecha: string;
+  horaInicio?: string | null;
+  horaFin?: string | null;
+  motivo?: string | null;
+  diaCompleto: boolean;
+}
+
+/**
+ * Crear nueva excepción de horario
+ * POST /excepciones-horario/medico
+ */
+export interface CreateExcepcionDto {
+  fecha: string;
   horaInicio?: string;
   horaFin?: string;
-  motivo: string;
-  disponible: boolean; // false = no atiende ese día
+  motivo?: string;
+}
+
+/**
+ * Actualizar excepción de horario
+ * PATCH /excepciones-horario/medico/:id
+ */
+export interface UpdateExcepcionDto {
+  fecha?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  motivo?: string;
+}
+
+/**
+ * Respuesta del backend para una excepción creada/actualizada
+ */
+export interface ExcepcionApiResponseDto {
+  message: string;
+  data: ExcepcionHorarioDto;
+}
+
+/**
+ * Respuesta del backend para lista de excepciones
+ */
+export interface ExcepcionesListApiResponseDto {
+  message: string;
+  data: ExcepcionHorarioDto[];
 }

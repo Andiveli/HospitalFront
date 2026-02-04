@@ -9,6 +9,7 @@ import type {
   ParticipantRole,
 } from '../../../core/models/video-call.models';
 import { AuthService } from '../../../core/services/auth.service';
+import { CitasService } from '../../../core/services/citas.service';
 import { VideoCallService } from '../../../core/services/video-call.service';
 import { SrcObjectDirective } from '../../../shared/directives/src-object.directive';
 
@@ -20,6 +21,7 @@ import { SrcObjectDirective } from '../../../shared/directives/src-object.direct
 })
 export class SalaVideollamadaComponent {
   private readonly authService = inject(AuthService);
+  private readonly citasService = inject(CitasService);
   private readonly videoCallService = inject(VideoCallService);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -211,6 +213,50 @@ export class SalaVideollamadaComponent {
       this.router.navigate(['/']);
     } else {
       this.router.navigate(['/citas']);
+    }
+  }
+
+  // =====================================
+  // DOCTOR METHODS - Finalizar Consulta
+  // =====================================
+  finalizarLoading = signal(false);
+
+  async finalizarConsulta(): Promise<void> {
+    const citaId = this.citaId();
+    if (!citaId) {
+      this.error.set('No se encontró el ID de la cita');
+      return;
+    }
+
+    // Confirmar antes de finalizar
+    if (
+      !confirm(
+        '¿Está seguro de finalizar esta consulta? Esta acción marcará la cita como atendida.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      this.finalizarLoading.set(true);
+      this.error.set(null);
+
+      // 1. Llamar al endpoint para finalizar la consulta
+      const result = await this.citasService.finalizarConsultaMedica(citaId);
+
+      console.log('[SalaVideollamada] Consulta finalizada:', result);
+
+      // 2. Dejar la sala de videollamada
+      this.videoCallService.leaveRoom();
+
+      // 3. Redirigir al formulario de registro de atención
+      this.router.navigate(['/doctor/registro-atencion', citaId]);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al finalizar la consulta';
+      this.error.set(errorMessage);
+      console.error('[SalaVideollamada] Error finalizando consulta:', err);
+    } finally {
+      this.finalizarLoading.set(false);
     }
   }
 

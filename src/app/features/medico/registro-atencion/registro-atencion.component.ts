@@ -130,7 +130,9 @@ export class RegistroAtencionComponent {
       }, 2000);
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Error al crear el registro de atención';
+        err instanceof Error
+          ? err.message
+          : 'Error al crear el registro de atención';
       this.error.set(errorMessage);
       console.error('[RegistroAtencion] Error:', err);
     } finally {

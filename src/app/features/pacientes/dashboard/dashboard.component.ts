@@ -8,14 +8,14 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import type { CitaResponseDto } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { CitasService } from '../../../core/services/citas.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,7 +123,9 @@ export class DashboardComponent {
 
       // Ordenar por fecha más próxima primero
       citasValidas.sort(
-        (a, b) => new Date(a.fechaHoraInicio).getTime() - new Date(b.fechaHoraInicio).getTime()
+        (a, b) =>
+          new Date(a.fechaHoraInicio).getTime() -
+          new Date(b.fechaHoraInicio).getTime(),
       );
 
       // Get the first one (most próxima)
@@ -178,6 +180,10 @@ export class DashboardComponent {
 
   agendarCita(): void {
     this.router.navigate(['/citas/agendar']);
+  }
+
+  navegarA(route: string): void {
+    this.router.navigate([route]);
   }
 
   // Inicia el reloj para actualizar el tiempo actual cada segundo

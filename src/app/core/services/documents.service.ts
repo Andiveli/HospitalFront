@@ -1,8 +1,4 @@
-import {
-  HttpClient,
-  type HttpErrorResponse,
-  HttpParams,
-} from '@angular/common/http';
+import { HttpClient, type HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -51,8 +47,7 @@ export class DocumentsService {
       backendMessage = apiError.message;
       errorMessage = apiError.message || errorMessage;
     } else if (error.status === 0) {
-      errorMessage =
-        'No se pudo conectar con el servidor. Verifica tu conexión.';
+      errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión.';
     } else if (error.status === 401) {
       errorMessage = 'No estás autorizado para ver estos documentos.';
     } else if (error.status === 404) {
@@ -76,9 +71,7 @@ export class DocumentsService {
    * @returns Promise con el array de documentos
    * @throws DocumentsError con el mensaje específico del backend
    */
-  async getDocumentsByHistoria(
-    tipo?: DocumentFilterType,
-  ): Promise<DocumentResponseDto[]> {
+  async getDocumentsByHistoria(tipo?: DocumentFilterType): Promise<DocumentResponseDto[]> {
     let params = new HttpParams();
 
     if (tipo && tipo !== DOCUMENT_FILTER_TYPES.ALL) {
@@ -87,14 +80,8 @@ export class DocumentsService {
 
     const response = await firstValueFrom(
       this.http
-        .get<
-          ApiResponse<DocumentResponseDto[]>
-        >(`${this.apiUrl}/documents/historia`, { params })
-        .pipe(
-          catchError((error: HttpErrorResponse) =>
-            throwError(() => this.handleError(error)),
-          ),
-        ),
+        .get<ApiResponse<DocumentResponseDto[]>>(`${this.apiUrl}/documents/historia`, { params })
+        .pipe(catchError((error: HttpErrorResponse) => throwError(() => this.handleError(error))))
     );
 
     return response.data;
@@ -116,11 +103,9 @@ export class DocumentsService {
   async getDocumentTypes(): Promise<TipoDocumento[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<ApiResponse<TipoDocumento[]>>(
-          `${this.apiUrl}/documents/tipos`,
-        ),
+        this.http.get<ApiResponse<TipoDocumento[]>>(`${this.apiUrl}/documents/tipos`)
       );
-      return response.data;
+      return response.data || [];
     } catch {
       console.warn('Endpoint /documents/tipos no disponible');
       return [];

@@ -5,205 +5,288 @@
       Mis Recetas Médicas
     </h1>
     @if (!loading() && !error() && totalRecetas() > 0) {
-      <p class="text-sm text-gray-500 mt-2">
-        {{ totalRecetas() }} receta{{ totalRecetas() === 1 ? '' : 's' }} en total
-      </p>
+    <p class="text-sm text-gray-500 mt-2">
+      {{ totalRecetas() }} receta{{ totalRecetas() === 1 ? '' : 's' }} en total
+    </p>
     }
   </header>
 
   <!-- Loading State -->
   @if (loading()) {
-    <div class="flex flex-col items-center justify-center py-12 text-gray-500">
-      <div class="w-10 h-10 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-      <p class="text-sm">Cargando recetas...</p>
-    </div>
+  <div class="flex flex-col items-center justify-center py-12 text-gray-500">
+    <div
+      class="w-10 h-10 border-3 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"
+    ></div>
+    <p class="text-sm">Cargando recetas...</p>
+  </div>
   }
 
   <!-- Error State -->
   @if (error()) {
-    <div class="flex flex-col items-center justify-center py-12 text-center">
-      <svg class="w-12 h-12 text-red-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      <p class="text-gray-600 mb-4">{{ error() }}</p>
-      <button 
-        type="button" 
-        class="px-6 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        (click)="loadRecetas()"
-      >
-        Reintentar
-      </button>
-    </div>
+  <div class="flex flex-col items-center justify-center py-12 text-center">
+    <svg
+      class="w-12 h-12 text-red-500 mb-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <p class="text-gray-600 mb-4">{{ error() }}</p>
+    <button
+      type="button"
+      class="px-6 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      (click)="loadRecetas()"
+    >
+      Reintentar
+    </button>
+  </div>
   }
 
   <!-- Vista de Detalle de Receta -->
   @if (!loading() && !error() && hasSelectedReceta()) {
-    <div class="bg-white border-2 border-gray-700 rounded-lg shadow-sm">
-      <!-- Header del Detalle -->
-      <div class="p-4 border-b-2 border-gray-200 flex items-center justify-between">
-        <button
-          type="button"
-          class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          (click)="closeDetail()"
+  <div class="bg-white border-2 border-gray-700 rounded-lg shadow-sm">
+    <!-- Header del Detalle -->
+    <div
+      class="p-4 border-b-2 border-gray-200 flex items-center justify-between"
+    >
+      <button
+        type="button"
+        class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        (click)="closeDetail()"
+      >
+        <svg
+          class="w-5 h-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
         >
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          <span class="font-medium">Volver a la lista</span>
-        </button>
-        <span class="text-sm text-gray-500">
-          {{ formatDate(selectedReceta()!.fechaHoraCreacion) }}
-        </span>
-      </div>
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span class="font-medium">Volver a la lista</span>
+      </button>
+      <span class="text-sm text-gray-500">
+        {{ formatDate(selectedReceta()!.fechaHoraCreacion) }}
+      </span>
+    </div>
 
-      <!-- Contenido del Detalle -->
-      <div class="p-6">
-        <!-- Info del Médico -->
-        <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-900">
-                {{ selectedReceta()!.medico.nombreCompleto }}
-              </h3>
-              <p class="text-sm text-gray-500">{{ selectedReceta()!.medico.especialidad }}</p>
-            </div>
+    <!-- Contenido del Detalle -->
+    <div class="p-6">
+      <!-- Info del Médico -->
+      <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <div class="flex items-start gap-4">
+          <div
+            class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"
+          >
+            <svg
+              class="w-6 h-6 text-blue-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
           </div>
-        </div>
-
-        <!-- Diagnóstico -->
-        @if (selectedReceta()!.diagnostico) {
-          <div class="mb-6">
-            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Diagnóstico</h4>
-            <p class="text-gray-900 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              {{ selectedReceta()!.diagnostico }}
+          <div>
+            <h3 class="font-semibold text-gray-900">
+              {{ selectedReceta()!.medico.nombreCompleto }}
+            </h3>
+            <p class="text-sm text-gray-500">
+              {{ selectedReceta()!.medico.especialidad }}
             </p>
           </div>
-        }
+        </div>
+      </div>
 
-        <!-- Medicamentos -->
-        <div class="mb-6">
-          <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-            Medicamentos Prescritos ({{ selectedReceta()!.medicamentos.length }})
-          </h4>
-          
-          <div class="space-y-4">
-            @for (medicamento of selectedReceta()!.medicamentos; track medicamento.nombre + medicamento.concentracion) {
-              <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                  <div>
-                    <h5 class="font-semibold text-gray-900">{{ medicamento.nombre }}</h5>
-                    <p class="text-sm text-gray-500">{{ medicamento.principioActivo }} {{ medicamento.concentracion }}</p>
-                  </div>
-                  <span 
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit"
-                    [class]="getViaAdministracionClass(medicamento.viaAdministracion)"
-                  >
-                    {{ medicamento.viaAdministracion }}
-                  </span>
-                </div>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                  <div class="bg-gray-50 rounded p-2">
-                    <span class="text-gray-500 block text-xs">Presentación</span>
-                    <span class="font-medium text-gray-900">{{ medicamento.presentacion }}</span>
-                  </div>
-                  <div class="bg-gray-50 rounded p-2">
-                    <span class="text-gray-500 block text-xs">Cantidad</span>
-                    <span class="font-medium text-gray-900">{{ medicamento.cantidad }} {{ medicamento.unidadMedida }}</span>
-                  </div>
-                  <div class="bg-gray-50 rounded p-2">
-                    <span class="text-gray-500 block text-xs">Frecuencia</span>
-                    <span class="font-medium text-gray-900">{{ medicamento.frecuencia }}</span>
-                  </div>
-                  <div class="bg-gray-50 rounded p-2">
-                    <span class="text-gray-500 block text-xs">Duración</span>
-                    <span class="font-medium text-gray-900">{{ medicamento.duracion }}</span>
-                  </div>
-                </div>
+      <!-- Diagnóstico -->
+      @if (selectedReceta()!.diagnostico) {
+      <div class="mb-6">
+        <h4
+          class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2"
+        >
+          Diagnóstico
+        </h4>
+        <p
+          class="text-gray-900 bg-yellow-50 border border-yellow-200 rounded-lg p-3"
+        >
+          {{ selectedReceta()!.diagnostico }}
+        </p>
+      </div>
+      }
 
-                @if (medicamento.indicaciones) {
-                  <div class="mt-3 pt-3 border-t border-gray-200">
-                    <span class="text-gray-500 text-xs block mb-1">Indicaciones especiales</span>
-                    <p class="text-sm text-gray-700">{{ medicamento.indicaciones }}</p>
-                  </div>
-                }
+      <!-- Medicamentos -->
+      <div class="mb-6">
+        <h4
+          class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3"
+        >
+          Medicamentos Prescritos ({{ selectedReceta()!.medicamentos.length }})
+        </h4>
+
+        <div class="space-y-4">
+          @for (medicamento of selectedReceta()!.medicamentos; track
+          medicamento.nombre + medicamento.concentracion) {
+          <div
+            class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3"
+            >
+              <div>
+                <h5 class="font-semibold text-gray-900">
+                  {{ medicamento.nombre }}
+                </h5>
+                <p class="text-sm text-gray-500">
+                  {{ medicamento.principioActivo }} {{ medicamento.concentracion
+                  }}
+                </p>
               </div>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit"
+                [class]="getViaAdministracionClass(medicamento.viaAdministracion)"
+              >
+                {{ medicamento.viaAdministracion }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div class="bg-gray-50 rounded p-2">
+                <span class="text-gray-500 block text-xs">Presentación</span>
+                <span class="font-medium text-gray-900"
+                  >{{ medicamento.presentacion }}</span
+                >
+              </div>
+              <div class="bg-gray-50 rounded p-2">
+                <span class="text-gray-500 block text-xs">Cantidad</span>
+                <span class="font-medium text-gray-900"
+                  >{{ medicamento.cantidad }} {{ medicamento.unidadMedida
+                  }}</span
+                >
+              </div>
+              <div class="bg-gray-50 rounded p-2">
+                <span class="text-gray-500 block text-xs">Frecuencia</span>
+                <span class="font-medium text-gray-900"
+                  >{{ medicamento.frecuencia }}</span
+                >
+              </div>
+              <div class="bg-gray-50 rounded p-2">
+                <span class="text-gray-500 block text-xs">Duración</span>
+                <span class="font-medium text-gray-900"
+                  >{{ medicamento.duracion }}</span
+                >
+              </div>
+            </div>
+
+            @if (medicamento.indicaciones) {
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <span class="text-gray-500 text-xs block mb-1"
+                >Indicaciones especiales</span
+              >
+              <p class="text-sm text-gray-700">
+                {{ medicamento.indicaciones }}
+              </p>
+            </div>
             }
           </div>
+          }
         </div>
-
-        <!-- Observaciones de la Receta -->
-        @if (selectedReceta()!.observacionesReceta) {
-          <div class="mb-6">
-            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Observaciones de la Receta</h4>
-            <p class="text-gray-700 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-              {{ selectedReceta()!.observacionesReceta }}
-            </p>
-          </div>
-        }
-
-        <!-- Observaciones de la Atención -->
-        @if (selectedReceta()!.observacionesAtencion) {
-          <div>
-            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Observaciones de la Atención</h4>
-            <p class="text-gray-600 text-sm">{{ selectedReceta()!.observacionesAtencion }}</p>
-          </div>
-        }
       </div>
+
+      <!-- Observaciones de la Receta -->
+      @if (selectedReceta()!.observacionesReceta) {
+      <div class="mb-6">
+        <h4
+          class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2"
+        >
+          Observaciones de la Receta
+        </h4>
+        <p
+          class="text-gray-700 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm"
+        >
+          {{ selectedReceta()!.observacionesReceta }}
+        </p>
+      </div>
+      }
+
+      <!-- Observaciones de la Atención -->
+      @if (selectedReceta()!.observacionesAtencion) {
+      <div>
+        <h4
+          class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2"
+        >
+          Observaciones de la Atención
+        </h4>
+        <p class="text-gray-600 text-sm">
+          {{ selectedReceta()!.observacionesAtencion }}
+        </p>
+      </div>
+      }
     </div>
+  </div>
   }
 
   <!-- Lista de Recetas -->
   @if (!loading() && !error() && !hasSelectedReceta()) {
-    <section>
-      @if (recetas().length === 0) {
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-          <svg class="w-12 h-12 text-gray-400 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/>
+  <section>
+    @if (recetas().length === 0) {
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <svg
+        class="w-12 h-12 text-gray-400 mb-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"
+        />
+      </svg>
+      <p class="text-gray-500">No tienes recetas médicas registradas</p>
+    </div>
+    } @else {
+    <div class="flex flex-col gap-3">
+      @for (receta of recetas(); track receta.id) {
+      <div
+        class="flex items-center justify-between p-4 bg-white border-2 border-gray-700 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-900 transition-all duration-200 cursor-pointer"
+        (click)="selectReceta(receta)"
+      >
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3 mb-1">
+            <span class="font-semibold text-gray-900">
+              {{ receta.medico.nombreCompleto }}
+            </span>
+            <span class="text-gray-400">|</span>
+            <span class="text-sm text-gray-500">
+              {{ formatDate(receta.fechaHoraCreacion) }}
+            </span>
+          </div>
+          <p class="text-sm text-gray-600 mb-1">
+            {{ receta.medico.especialidad }}
+          </p>
+          <p class="text-sm text-gray-700 font-medium">
+            {{ getMedicamentosResumen(receta.medicamentos) }}
+          </p>
+        </div>
+        <div class="ml-4 flex-shrink-0">
+          <svg
+            class="w-5 h-5 text-gray-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M9 18l6-6-6-6" />
           </svg>
-          <p class="text-gray-500">No tienes recetas médicas registradas</p>
         </div>
-      } @else {
-        <div class="flex flex-col gap-3">
-          @for (receta of recetas(); track receta.id) {
-            <div 
-              class="flex items-center justify-between p-4 bg-white border-2 border-gray-700 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-900 transition-all duration-200 cursor-pointer"
-              (click)="selectReceta(receta)"
-            >
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 mb-1">
-                  <span class="font-semibold text-gray-900">
-                    {{ receta.medico.nombreCompleto }}
-                  </span>
-                  <span class="text-gray-400">|</span>
-                  <span class="text-sm text-gray-500">
-                    {{ formatDate(receta.fechaHoraCreacion) }}
-                  </span>
-                </div>
-                <p class="text-sm text-gray-600 mb-1">
-                  {{ receta.medico.especialidad }}
-                </p>
-                <p class="text-sm text-gray-700 font-medium">
-                  {{ getMedicamentosResumen(receta.medicamentos) }}
-                </p>
-              </div>
-              <div class="ml-4 flex-shrink-0">
-                <svg class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-          }
-        </div>
+      </div>
       }
-    </section>
+    </div>
+    }
+  </section>
   }
 </div>

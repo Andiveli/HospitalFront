@@ -1,6 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import type { SignupDto } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 
 const GENEROS = [
@@ -8,6 +14,10 @@ const GENEROS = [
   { value: 2, label: 'Femenino' },
   { value: 3, label: 'Otro' },
 ] as const;
+
+// Password pattern: min 8 chars, uppercase, lowercase, number, special char
+const PASSWORD_PATTERN =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 @Component({
   selector: 'app-register',
@@ -33,8 +43,15 @@ export class RegisterComponent {
     primerApellido: ['', [Validators.required, Validators.minLength(2)]],
     segundoApellido: [''],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    confirmarPassword: ['', [Validators.required]],
+    password: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(PASSWORD_PATTERN),
+      ],
+    ],
+    confirmPassword: ['', [Validators.required]],
     genero: [0, [Validators.required, Validators.min(1)]],
   });
 
@@ -46,9 +63,9 @@ export class RegisterComponent {
 
     // Validar que las contraseñas coincidan
     const password = this.registerForm.value.password;
-    const confirmarPassword = this.registerForm.value.confirmarPassword;
+    const confirmPassword = this.registerForm.value.confirmPassword;
 
-    if (password !== confirmarPassword) {
+    if (password !== confirmPassword) {
       this.errorMessage.set('Las contraseñas no coinciden');
       return;
     }
@@ -58,34 +75,52 @@ export class RegisterComponent {
 
     try {
       const formData = this.registerForm.getRawValue();
-      const signupData: any = {
+
+      // Build SignupDto with correct field names for backend
+      // Note: genero comes as string from select, must convert to number
+      const signupData: SignupDto = {
         cedula: formData.cedula,
         primerNombre: formData.primerNombre,
         primerApellido: formData.primerApellido,
         email: formData.email,
-        password: formData.password,
-        confirmarPassword: formData.confirmarPassword,
-        genero: formData.genero,
+        passwordHash: formData.password, // Backend expects 'passwordHash'
+        confirmPassword: formData.confirmPassword, // Backend expects 'confirmPassword'
+        genero: Number(formData.genero), // Convert to number (select returns string)
       };
 
-      // Solo añadir campos opcionales si tienen valor
-      if (formData.segundoNombre) {
-        signupData.segundoNombre = formData.segundoNombre;
+      // Solo añadir campos opcionales si tienen valor (no vacío)
+      if (formData.segundoNombre && formData.segundoNombre.trim() !== '') {
+        signupData.segundoNombre = formData.segundoNombre.trim();
+      } else {
+        signupData.segundoNombre = ' ';
       }
-      if (formData.segundoApellido) {
-        signupData.segundoApellido = formData.segundoApellido;
+      if (formData.segundoApellido && formData.segundoApellido.trim() !== '') {
+        signupData.segundoApellido = formData.segundoApellido.trim();
+      } else {
+        signupData.segundoApellido = ' ';
       }
 
       const response = await this.authService.signup(signupData);
 
-      this.successMessage.set(response.message);
+      this.successMessage.set(
+        response.message ||
+          'Registro exitoso. Revisá tu email para confirmar tu cuenta.',
+      );
 
-      // Redirigir al login después de 2 segundos
+      // Redirigir al login después de 3 segundos
       setTimeout(() => {
         this.router.navigate(['/auth/login']);
-      }, 2000);
-    } catch (error: any) {
-      const message = error?.error?.message || 'Error al registrarse. Intentá de nuevo.';
+      }, 3000);
+    } catch (error: unknown) {
+      let message = 'Error al registrarse. Intentá de nuevo.';
+
+      if (typeof error === 'object' && error !== null) {
+        const httpError = error as { error?: { message?: string } };
+        if (httpError.error?.message) {
+          message = httpError.error.message;
+        }
+      }
+
       this.errorMessage.set(message);
     }
   }
@@ -111,8 +146,8 @@ export class RegisterComponent {
   get password() {
     return this.registerForm.get('password');
   }
-  get confirmarPassword() {
-    return this.registerForm.get('confirmarPassword');
+  get confirmPassword() {
+    return this.registerForm.get('confirmPassword');
   }
   get genero() {
     return this.registerForm.get('genero');
