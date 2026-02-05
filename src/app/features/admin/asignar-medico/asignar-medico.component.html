@@ -1,0 +1,349 @@
+<div class="min-h-screen bg-slate-50 p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <a
+          routerLink="/admin/medicos"
+          class="p-2 hover:bg-white rounded-lg transition"
+          title="Volver"
+        >
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </a>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Asignar Rol de Médico</h1>
+      </div>
+      <p class="text-slate-600">Convierte un paciente existente en médico asignando especialidades y horarios</p>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-4">
+          <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-slate-600">Cargando formulario...</p>
+        </div>
+      </div>
+    } @else {
+      <!-- Success Message -->
+      @if (success()) {
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <p class="text-emerald-800 font-medium">¡Médico asignado exitosamente! Redirigiendo...</p>
+          </div>
+        </div>
+      }
+
+      <!-- Error Message -->
+      @if (error()) {
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-red-700">{{ error() }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Seleccionar Paciente -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">1. Seleccionar Usuario</h2>
+          
+          <div class="space-y-4">
+            <div class="relative">
+              <label for="usuario" class="block text-sm font-medium text-slate-700 mb-2">
+                Paciente <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="usuario"
+                [value]="pacienteSearchTerm()"
+                (input)="onPacienteSearchChange($any($event.target).value)"
+                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Escribe al menos 3 caracteres para buscar..."
+                autocomplete="off"
+                required
+              />
+              
+              <!-- Dropdown de resultados -->
+              @if (showPacienteDropdown()) {
+                <div class="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  @for (paciente of pacientesFiltrados(); track paciente.id) {
+                    <button
+                      type="button"
+                      (click)="selectPaciente(paciente)"
+                      class="w-full text-left px-4 py-3 hover:bg-purple-50 transition border-b border-slate-100 last:border-b-0"
+                    >
+                      <p class="font-medium text-slate-900">{{ paciente.nombres }} {{ paciente.apellidos }}</p>
+                      <p class="text-sm text-slate-600">{{ paciente.cedula }} • {{ paciente.email }}</p>
+                    </button>
+                  }
+                </div>
+              }
+
+              <!-- Hint de búsqueda -->
+              @if (pacienteSearchTerm().length > 0 && pacienteSearchTerm().length < 3 && !usuarioId()) {
+                <p class="text-xs text-slate-500 mt-1">Escribe al menos {{ 3 - pacienteSearchTerm().length }} caracteres más...</p>
+              }
+            </div>
+
+            @if (pacienteSeleccionado()) {
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div class="flex items-start justify-between mb-2">
+                  <p class="text-sm font-medium text-purple-900">Usuario seleccionado:</p>
+                  <button
+                    type="button"
+                    (click)="clearPaciente()"
+                    class="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+                <div class="text-sm text-purple-700 space-y-1">
+                  <p><strong>Nombre:</strong> {{ pacienteSeleccionado()?.nombres }} {{ pacienteSeleccionado()?.apellidos }}</p>
+                  <p><strong>Cédula:</strong> {{ pacienteSeleccionado()?.cedula }}</p>
+                  <p><strong>Email:</strong> {{ pacienteSeleccionado()?.email }}</p>
+                  <p><strong>Género:</strong> {{ pacienteSeleccionado()?.genero }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Información Profesional -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">2. Información Profesional</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="licencia" class="block text-sm font-medium text-slate-700 mb-2">
+                Licencia Médica <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="licencia"
+                [value]="licenciaMedica()"
+                (input)="licenciaMedica.set($any($event.target).value)"
+                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Ej: LIC-12345"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="pasaporte" class="block text-sm font-medium text-slate-700 mb-2">
+                Pasaporte (opcional)
+              </label>
+              <input
+                type="text"
+                id="pasaporte"
+                [value]="pasaporte()"
+                (input)="pasaporte.set($any($event.target).value)"
+                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Opcional"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Especialidades -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">3. Especialidades</h2>
+            <button
+              type="button"
+              (click)="agregarEspecialidad()"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm font-medium"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Agregar Especialidad
+            </button>
+          </div>
+
+          @if (especialidadesSeleccionadas().length === 0) {
+            <div class="text-center py-8 text-slate-500">
+              <p>No hay especialidades agregadas. Haz clic en "Agregar Especialidad" para comenzar.</p>
+            </div>
+          } @else {
+            <div class="space-y-3">
+              @for (esp of especialidadesSeleccionadas(); track $index) {
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Autocomplete de Especialidad -->
+                    <div class="relative">
+                      <input
+                        type="text"
+                        [value]="especialidadSearchTerms().get($index) || ''"
+                        (input)="onEspecialidadSearchChange($index, $any($event.target).value)"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                        placeholder="Escribe al menos 3 caracteres..."
+                        autocomplete="off"
+                        [class.border-emerald-500]="esp.especialidadId !== null"
+                      />
+                      
+                      <!-- Dropdown de resultados -->
+                      @if (showEspecialidadDropdown($index)) {
+                        <div class="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          @for (e of getEspecialidadesFiltradas($index); track e.id) {
+                            <button
+                              type="button"
+                              (click)="selectEspecialidad($index, e)"
+                              class="w-full text-left px-3 py-2 hover:bg-purple-50 transition border-b border-slate-100 last:border-b-0 text-sm"
+                            >
+                              <p class="font-medium text-slate-900">{{ e.nombre }}</p>
+                              @if (e.descripcion) {
+                                <p class="text-xs text-slate-600">{{ e.descripcion }}</p>
+                              }
+                            </button>
+                          }
+                        </div>
+                      }
+                      
+                      <!-- Indicador de selección -->
+                      @if (esp.especialidadId !== null) {
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                          </svg>
+                        </div>
+                      }
+                    </div>
+
+                    <label class="flex items-center gap-2 px-3 py-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="esp.principal"
+                        (change)="onPrincipalChange($index)"
+                        class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <span class="text-sm text-slate-700">Principal</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    (click)="eliminarEspecialidad($index)"
+                    class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+                    title="Eliminar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (especialidadesSeleccionadas().length > 0 && !tienePrincipal()) {
+            <p class="text-sm text-amber-600 mt-3">⚠️ Debe marcar al menos una especialidad como principal</p>
+          }
+        </div>
+
+        <!-- Horarios -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">4. Horarios de Atención</h2>
+            <button
+              type="button"
+              (click)="agregarHorario()"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition text-sm font-medium"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Agregar Horario
+            </button>
+          </div>
+
+          @if (horariosSeleccionados().length === 0) {
+            <div class="text-center py-8 text-slate-500">
+              <p>No hay horarios agregados. Haz clic en "Agregar Horario" para comenzar.</p>
+            </div>
+          } @else {
+            <div class="space-y-3">
+              @for (horario of horariosSeleccionados(); track $index) {
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <select
+                      [value]="horario.diaId"
+                      (change)="onDiaChange($index, +$any($event.target).value)"
+                      class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                      required
+                    >
+                      <option [value]="null">-- Día --</option>
+                      @for (dia of dias(); track dia.id) {
+                        <option [value]="dia.id">{{ dia.nombre }}</option>
+                      }
+                    </select>
+
+                    <input
+                      type="time"
+                      [(ngModel)]="horario.horaInicio"
+                      [name]="'horaInicio_' + $index"
+                      class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                      placeholder="Hora inicio"
+                      required
+                    />
+
+                    <input
+                      type="time"
+                      [(ngModel)]="horario.horaFin"
+                      [name]="'horaFin_' + $index"
+                      class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                      placeholder="Hora fin"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    (click)="eliminarHorario($index)"
+                    class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition"
+                    title="Eliminar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancelar()"
+            class="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition font-medium"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="!formValid() || submitting()"
+            class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            @if (submitting()) {
+              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Procesando...</span>
+            } @else {
+              <span>Asignar Médico</span>
+            }
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

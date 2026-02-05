@@ -1,0 +1,311 @@
+<div class="p-6 lg:p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">
+          Estilos de Vida
+        </h1>
+        <p class="text-slate-600 mt-1">
+          Gestiona los tipos de estilos de vida para la historia clínica
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-all shadow-sm hover:shadow-md"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Nuevo Estilo de Vida
+        </button>
+        <a
+          routerLink="/admin/dashboard"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 font-medium rounded-xl transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de éxito -->
+  @if (success()) {
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+      <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-green-800 font-medium">{{ success() }}</p>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex justify-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+    </div>
+  } @else if (error()) {
+    <!-- Error State -->
+    <div class="max-w-lg mx-auto text-center py-10">
+      <div class="bg-red-50 border-2 border-red-200 rounded-xl p-8">
+        <h3 class="text-xl font-bold text-red-800 mb-2">Error</h3>
+        <p class="text-red-700 mb-4">{{ error() }}</p>
+        <button
+          (click)="cargarEstilos()"
+          class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- Content -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- Stats Header -->
+      <div class="grid grid-cols-5 divide-x divide-slate-200 bg-slate-50 border-b border-slate-200">
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-slate-900">{{ estilos().length }}</p>
+          <p class="text-sm text-slate-500">Total</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-green-600">
+            {{ totalDietas() }}
+          </p>
+          <p class="text-sm text-slate-500">Dietas</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-blue-600">
+            {{ totalEjercicios() }}
+          </p>
+          <p class="text-sm text-slate-500">Ejercicios</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-amber-600">
+            {{ totalSustancias() }}
+          </p>
+          <p class="text-sm text-slate-500">Sustancias</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-teal-600">
+            {{ totalActivos() }}
+          </p>
+          <p class="text-sm text-slate-500">Activos</p>
+        </div>
+      </div>
+
+      @if (estilos().length > 0) {
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-16">#</th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700">Nombre</th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700">Categoría</th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700">Descripción</th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-24">Estado</th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-32">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              @for (estilo of estilos(); track estilo.id; let i = $index) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="py-3 px-4 text-slate-500 text-sm">{{ i + 1 }}</td>
+                  <td class="py-3 px-4">
+                    <p class="font-medium text-slate-900">{{ estilo.nombre }}</p>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                      [class]="getCategoriaClass(estilo.categoria)"
+                    >
+                      {{ getCategoriaLabel(estilo.categoria) }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <p class="text-sm text-slate-600 max-w-xs truncate">
+                      {{ estilo.descripcion || '-' }}
+                    </p>
+                  </td>
+                  <td class="py-3 px-4">
+                    <button
+                      (click)="toggleActivo(estilo)"
+                      class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+                      [class]="estilo.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                    >
+                      {{ estilo.activo ? 'Activo' : 'Inactivo' }}
+                    </button>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                      <button
+                        (click)="openEditModal(estilo)"
+                        class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Editar"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        (click)="eliminar(estilo.id)"
+                        class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Eliminar"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <!-- Empty State -->
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-700 mb-2">
+            No hay estilos de vida
+          </h3>
+          <p class="text-slate-500 mb-6 max-w-md mx-auto">
+            Comienza agregando los primeros estilos de vida que podrán ser asignados a los pacientes.
+          </p>
+          <button
+            (click)="openCreateModal()"
+            class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition-colors"
+          >
+            Crear Primer Estilo de Vida
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Info Backend -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <h4 class="font-medium text-blue-900">Gestión de Estilos de Vida</h4>
+          <p class="text-sm text-blue-700 mt-1">
+            Actualmente se muestran datos de ejemplo. Cuando el backend implemente el endpoint,
+            estos se sincronizarán automáticamente con la base de datos.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    (click)="closeModal()"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="text-xl font-bold text-slate-900 mb-6">
+        {{ modalMode() === 'create' ? 'Nuevo Estilo de Vida' : 'Editar Estilo de Vida' }}
+      </h3>
+
+      @if (formError()) {
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
+          {{ formError() }}
+        </div>
+      }
+
+      <form (submit)="guardar(); $event.preventDefault()" class="space-y-4">
+        <!-- Nombre -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Nombre <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="nombre"
+            [ngModel]="nombre()"
+            (ngModelChange)="nombre.set($event)"
+            placeholder="Ej: Fumador, Vegetariano..."
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            required
+          />
+        </div>
+
+        <!-- Categoría -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Categoría <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="categoria"
+            [ngModel]="categoria()"
+            (ngModelChange)="categoria.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            @for (cat of categorias; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Descripción
+          </label>
+          <textarea
+            name="descripcion"
+            [ngModel]="descripcion()"
+            (ngModelChange)="descripcion.set($event)"
+            placeholder="Describe brevemente este estilo de vida..."
+            rows="3"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="px-4 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg font-medium transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="px-4 py-2 bg-teal-600 text-white hover:bg-teal-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            @if (isSubmitting()) {
+              <span class="flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Guardando...
+              </span>
+            } @else {
+              {{ modalMode() === 'create' ? 'Crear' : 'Guardar Cambios' }}
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

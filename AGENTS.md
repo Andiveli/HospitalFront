@@ -4,14 +4,20 @@
 
 **Backend API:** `http://localhost:3000/api-json` (Swagger Documentation)
 **UI Framework:** Tailwind CSS v4 (following best practices)
-**Target Users:** Pacientes y Médicos
+**Target Users:** Pacientes, Médicos y Administradores
 **Authentication Flow:** 
 - Pacientes: Login → Dashboard Paciente → Perfil/Historial/Citas
 - Médicos: Login → Dashboard Médico → Perfil Profesional → Mis Consultas
+- Administradores: Login → Dashboard Admin → Gestión del Sistema
+
 **Core Features:** 
-- Gestión de pacientes completa (completado ✅)
-- Gestión de médicos y sus perfiles profesionales (en progreso)
-- Sistema de reserva y atención de citas virtuales
+- ✅ Gestión de pacientes completa
+- ✅ Gestión de médicos y sus perfiles profesionales
+- ✅ Sistema de reserva y atención de citas virtuales
+- ✅ Panel de administración (medicamentos, especialidades, enfermedades, configuración)
+- 🚧 Reportes y estadísticas
+- 🚧 Auditoría del sistema
+- 🚧 Gestión de usuarios
 
 ---
 
@@ -30,7 +36,7 @@ Historial Médico y Documentos (protegido)
 Reserva de Citas (protegido)
 ```
 
-### **Médico Journey (EN DESARROLLO)**
+### **Médico Journey (COMPLETADO)**
 ```
 Página de Login (pública)
       ↓ (autenticación como médico)
@@ -41,6 +47,19 @@ Perfil Profesional (protegido)
 Mis Consultas (protegido)
       ↓
 Atender Cita Virtual (protegido)
+```
+
+### **Administrador Journey (COMPLETADO)**
+```
+Página de Login (pública)
+      ↓ (autenticación como admin)
+Dashboard Admin (protegido)
+      ↓
+Gestión de Médicos y Pacientes
+      ↓
+Gestión de Citas, Medicamentos, Especialidades, Enfermedades
+      ↓
+Configuración del Sistema, Reportes, Auditoría, Usuarios
 ```
 
 ---
@@ -78,11 +97,21 @@ Atender Cita Virtual (protegido)
 - `GET /medicos/consultas` - Listar consultas asignadas
 - `GET /medicos/consultas/{id}` - Detalle de consulta
 - `POST /medicos/consultas/{id}/atender` - Iniciar atención virtual
+- `POST /medicos/excepciones-horario` - Crear excepción de horario
+- `GET /medicos/excepciones-horario` - Listar excepciones
+
+### **Endpoints Protegidos - Administradores (JWT Required):**
+
+- Todos los endpoints de gestión (médicos, pacientes, citas, medicamentos, etc.)
+- Endpoints de configuración del sistema
+- Endpoints de reportes y estadísticas
+- Endpoints de auditoría
+- Endpoints de gestión de usuarios
 
 ### **Security Implementation:**
 
 - HTTP Client Interceptor para añadir `Bearer {token}` a requests protegidos
-- Role-based Auth Guards (`pacienteGuard`, `medicoGuard`)
+- Role-based Auth Guards (`pacienteGuard`, `medicoGuard`, `adminGuard`)
 - Token storage en localStorage con signals
 - Token refresh strategy
 - Redirección basada en rol post-login
@@ -91,7 +120,7 @@ Atender Cita Virtual (protegido)
 
 ## 🗂️ **Feature Modules & Documentation Sources**
 
-### **1. Authentication Module** 🔐
+### **1. Authentication Module** 🔐 (COMPLETADO)
 
 **Backend Docs:** `/auth/*` endpoints
 **Components:**
@@ -100,6 +129,7 @@ Atender Cita Virtual (protegido)
 - Register page (`/auth/register`)
 - Forgot password (`/auth/forgot`)
 - Reset password (`/auth/reset`)
+- Confirm email (`/auth/confirmar/:token`)
 
 **Key DTOs:**
 
@@ -139,16 +169,20 @@ Atender Cita Virtual (protegido)
 - DocumentResponseDto { id, titulo, mimeType, fechaHoraSubida }
 ```
 
-### **3. Doctor Module** 👨‍⚕️ (EN DESARROLLO)
+### **3. Doctor Module** 👨‍⚕️ (COMPLETADO)
 
 **Backend Docs:** `/medicos/*`, `/auth/perfil`
 **Components:**
 
-- Doctor Dashboard (`/medico/dashboard`)
-- **Professional Profile (`/medico/perfil-profesional`)** ⭐ CURRENT FOCUS
-- Work Schedule Manager (`/medico/horarios`)
-- My Appointments (`/medico/mis-consultas`)
-- Virtual Appointment Room (`/medico/consulta/:id`)
+- Doctor Dashboard (`/doctor/dashboard`)
+- Professional Profile (`/doctor/profile`)
+- Work Schedule Display (`/doctor/profile`)
+- Exception Schedule Manager (`/doctor/excepciones-horario`)
+- My Appointments (`/citas/medico`)
+- Virtual Appointment Room (`/doctor/consulta/:id`)
+- Video Call (`/doctor/videollamada/:id`)
+- Medical Record (`/doctor/registro-atencion/:id`)
+- Settings (`/doctor/ajustes`)
 
 **Key DTOs:**
 
@@ -158,7 +192,6 @@ Atender Cita Virtual (protegido)
     id: number;
     cedula: string;
     nombres: string;
-    apellidos: string;
     email: string;
     telefono: string;
     fechaNacimiento?: Date;
@@ -192,12 +225,23 @@ Atender Cita Virtual (protegido)
     activo: boolean;
   }
 
-- CreateHorarioDto {
-    diaSemana: string;
-    horaInicioManana?: string;
-    horaFinManana?: string;
-    horaInicioTarde?: string;
-    horaFinTarde?: string;
+// Excepciones de Horario
+- ExcepcionHorarioDto {
+    id: number;
+    medicoId: number;
+    fecha: string;
+    horaInicio?: string;
+    horaFin?: string;
+    diaCompleto: boolean;
+    motivo?: string;
+    createdAt: Date;
+  }
+
+- CreateExcepcionDto {
+    fecha: string;
+    horaInicio?: string;
+    horaFin?: string;
+    motivo?: string;
   }
 
 // Consultas
@@ -216,30 +260,31 @@ Atender Cita Virtual (protegido)
 - PacienteResumenDto {
     id: number;
     nombres: string;
-    apellidos: string;
     edad: number;
     genero: string;
   }
 ```
 
-### **4. Medical History Module** 📋
+### **4. Medical History Module** 📋 (COMPLETADO)
 
 **Backend Docs:** `/paciente-enfermedad/*`, `/enfermedades/*`, `/tipo-enfermedad/*`
 **Components:**
 
+- Admin Diseases List (`/admin/enfermedades`)
+- Disease Create/Edit Forms
 - Medical Conditions List
 - Disease Details View
-- Medical History Timeline
 
 **Key DTOs:**
 
 ```typescript
 - CreatePacienteEnfermedadDto
 - UpdatePacienteEnfermedadDto
-- EnfermedadDto
+- EnfermedadDto { id, nombre, tipoEnfermedadId }
+- TipoEnfermedadDto { id, nombre }
 ```
 
-### **5. Documents Module** 📄
+### **5. Documents Module** 📄 (COMPLETADO)
 
 **Backend Docs:** `/documents/*`
 **Components:**
@@ -257,15 +302,185 @@ Atender Cita Virtual (protegido)
 - File upload constraints (max 10MB, PDF/JPEG/PNG/GIF/WebP)
 ```
 
-### **6. Appointments Module** 📅
+### **6. Appointments Module** 📅 (COMPLETADO)
 
 **Backend Docs:** `/citas/*`
 **Components:**
 
 - Appointment Calendar (paciente)
 - Available Slots View (paciente)
-- My Appointments List (ambos roles)
+- My Appointments List (paciente y médico)
 - Virtual Room (médico y paciente)
+- Admin Citas Management (`/admin/citas`)
+
+### **7. Admin Module - Medications** 💊 (COMPLETADO)
+
+**Backend Docs:** `/medicamentos/*`
+**Components:**
+
+- Admin Medications List (`/admin/medicamentos`)
+- Medication Create/Edit Forms
+
+### **8. Admin Module - Specialties** 🏥 (COMPLETADO)
+
+**Backend Docs:** `/especialidades/*`
+**Components:**
+
+- Admin Specialties List (`/admin/especialidades`)
+- Specialty Create/Edit Forms
+
+### **9. Admin Module - Configuration** ⚙️ (COMPLETADO)
+
+**Backend Docs:** `/configuracion/*` (pendiente de implementar en backend)
+**Components:**
+
+- Admin Configuration (`/admin/configuracion`)
+  - ⏰ Horarios del hospital por día
+  - 📅 Configuración de citas (duración, máximo por día, anticipación)
+  - 🔔 Notificaciones (email, SMS, tiempo de recordatorio)
+  - 🎉 Días Festivos (agregar/eliminar)
+
+**Key DTOs:**
+
+```typescript
+// Configuración del Sistema
+- ConfiguracionHospital {
+    horarios: HorarioHospital[];
+    duracionCitaMinutos: number;
+    maxCitasPorDia: number;
+    diasAnticipacionAgendar: number;
+    permitirCitasTelefonicas: boolean;
+    notificacionesEmail: boolean;
+    notificacionesSMS: boolean;
+    tiempoRecordatorioHoras: number;
+  }
+
+- HorarioHospital {
+    diaSemana: number; // 0 = Domingo, 1 = Lunes, etc.
+    abierto: boolean;
+    horaApertura?: string;
+    horaCierre?: string;
+  }
+
+- DiaFestivo {
+    id: string;
+    fecha: string;
+    descripcion: string;
+  }
+```
+
+### **10. Admin Module - Reports** 📊 (PENDIENTE)
+
+**Backend Docs:** `/reportes/*` (pendiente de implementar en backend)
+**Components:**
+
+- Admin Reports Dashboard (`/admin/reportes`)
+  - 📈 Estadísticas de citas por mes
+  - 📊 Citas por médico
+  - 📊 Citas por especialidad
+  - 📉 Citas canceladas vs atendidas
+  - 📥 Exportar datos a CSV
+  - 📊 Gráficos simples de barras
+
+**Key DTOs:**
+
+```typescript
+// Reportes
+- ReporteEstadisticoDto {
+    periodo: { inicio: Date; fin: Date };
+    totalCitas: number;
+    citasAtendidas: number;
+    citasCanceladas: number;
+    citasPendientes: number;
+    promedioCitasPorDia: number;
+    citasPorMes: { mes: string; cantidad: number }[];
+    citasPorMedico: { medico: string; cantidad: number }[];
+    citasPorEspecialidad: { especialidad: string; cantidad: number }[];
+  }
+
+- FiltroReporteDto {
+    fechaInicio: string;
+    fechaFin: string;
+    medicoId?: number;
+    especialidadId?: number;
+    tipo?: 'VIRTUAL' | 'PRESENCIAL';
+  }
+```
+
+### **11. Admin Module - Audit** 📋 (PENDIENTE)
+
+**Backend Docs:** `/auditoria/*` (pendiente de implementar en backend)
+**Components:**
+
+- Admin Audit Log (`/admin/auditoria`)
+  - 📝 Registro de actividad
+  - 👤 Quién hizo qué y cuándo
+  - 🔐 Login/logout de usuarios
+  - 📝 Cambios en citas
+  - 🔍 Filtros por usuario, acción, fecha
+
+**Key DTOs:**
+
+```typescript
+// Auditoría
+- LogAuditoriaDto {
+    id: number;
+    usuarioId: number;
+    usuarioNombre: string;
+    accion: string;
+    entidad: string;
+    entidadId?: number;
+    detalles?: string;
+    ipAddress: string;
+    userAgent: string;
+    timestamp: Date;
+  }
+
+- FiltroAuditoriaDto {
+    fechaInicio?: string;
+    fechaFin?: string;
+    usuarioId?: number;
+    accion?: string;
+    entidad?: string;
+  }
+```
+
+### **12. Admin Module - Users** 👥 (PENDIENTE)
+
+**Backend Docs:** `/usuarios/*` (pendiente de implementar en backend)
+**Components:**
+
+- Admin Users List (`/admin/usuarios`)
+  - 👥 Listar todos los usuarios (pacientes, médicos, admins)
+  - 🔐 Activar/desactivar cuentas
+  - 🔑 Resetear contraseñas
+  - 👁️ Ver último acceso
+
+**Key DTOs:**
+
+```typescript
+// Usuarios
+- UsuarioDto {
+    id: number;
+    email: string;
+    nombreCompleto: string;
+    cedula: string;
+    role: 'PACIENTE' | 'MEDICO' | 'ADMIN';
+    activo: boolean;
+    ultimoAcceso?: Date;
+    creadoEn: Date;
+  }
+
+- UpdateUsuarioDto {
+    activo?: boolean;
+    role?: 'PACIENTE' | 'MEDICO' | 'ADMIN';
+  }
+
+- ResetPasswordDto {
+    userId: number;
+    nuevaPassword: string;
+  }
+```
 
 ---
 
@@ -294,6 +509,7 @@ Atender Cita Virtual (protegido)
 - **Navigation:** Signals para active state
 - **Data Tables:** Virtual scrolling para listas grandes
 - **Avatar/Profile Images:** NgOptimizedImage con placeholders
+- **Charts:** Simple CSS-based bar charts for reports
 
 ### **Utility Usage:**
 
@@ -323,34 +539,59 @@ src/app/
 │   ├── services/
 │   │   ├── auth.ts                 # Auth service con role detection
 │   │   ├── api.ts                  # Base API service
-│   │   └── storage.ts              # LocalStorage service
+│   │   ├── storage.ts              # LocalStorage service
+│   │   ├── configuracion.service.ts # Configuración del sistema (localStorage)
+│   │   └── excepciones-horario.service.ts
 │   ├── interceptors/
 │   │   └── auth.ts                 # JWT interceptor
-│   └── guards/
-│       ├── auth.ts                 # General auth guard
-│       ├── paciente.ts             # Paciente role guard
-│       └── medico.ts               # Medico role guard
+│   ├── guards/
+│   │   ├── auth.ts                 # General auth guard
+│   │   ├── paciente.ts             # Paciente role guard
+│   │   ├── medico.ts               # Medico role guard
+│   │   └── admin.ts                # Admin role guard
+│   └── models/
+│       └── index.ts                # Type definitions
 ├── features/
 │   ├── auth/
 │   │   ├── login/
 │   │   ├── register/
-│   │   └── forgot-password/
+│   │   ├── forgot-password/
+│   │   ├── confirm-email/
+│   │   └── reset-password/
 │   ├── paciente/                   # ✅ COMPLETADO
 │   │   ├── dashboard/
 │   │   ├── perfil/
 │   │   ├── historial-medico/
-│   │   └── documentos/
-│   ├── medico/                     # 🚧 EN DESARROLLO
+│   │   ├── documentos/
+│   │   └── citas/
+│   ├── medico/                     # ✅ COMPLETADO
 │   │   ├── dashboard/
-│   │   ├── perfil-profesional/     # ⭐ CURRENT FOCUS
-│   │   ├── horarios/
-│   │   └── mis-consultas/
-│   └── shared/
-│       ├── components/
-│       │   ├── sidebar/
-│       │   ├── navbar/
-│       │   └── button/
-│       └── services/
+│   │   ├── perfil-profesional/
+│   │   ├── excepciones-horario/
+│   │   ├── mis-consultas/
+│   │   ├── registro-atencion/
+│   │   ├── ajustes/
+│   │   └── video-call/
+│   ├── admin/                      # ✅ COMPLETADO (parcial)
+│   │   ├── dashboard/
+│   │   ├── layout/
+│   │   ├── pacientes/
+│   │   ├── medicos/
+│   │   ├── citas/
+│   │   ├── medicamentos/
+│   │   ├── especialidades/
+│   │   ├── enfermedades/
+│   │   ├── configuracion/          # ✅ NUEVO
+│   │   ├── reportes/               # 🚧 PENDIENTE
+│   │   ├── auditoria/              # 🚧 PENDIENTE
+│   │   ├── usuarios/               # 🚧 PENDIENTE
+│   │   └── otros/
+│   ├── shared/
+│   │   ├── layout-medico/
+│   │   ├── layout-paciente/
+│   │   ├── ajustes/
+│   │   └── video-call/
+│   └── debug/
 ├── app.ts
 ├── app.config.ts
 └── app.routes.ts
@@ -401,40 +642,57 @@ src/app/
 - [x] Document upload and gallery
 - [x] Password change functionality
 
-### **Phase 4: Doctor Module - Professional Profile (EN PROGRESO 🚧)**
+### **Phase 4: Doctor Module (COMPLETADO ✅)**
 
-- [ ] **Doctor Professional Profile page (`/medico/perfil-profesional`)**
-  - [ ] Profile header (avatar, name, contact info)
-  - [ ] Professional stats (consultas atendidas, calificación)
-  - [ ] Especialidad card
-  - [ ] Work schedule display table
-  - [ ] "Solicitar Excepción" button
-  - [ ] Edit profile functionality
-- [ ] Doctor Dashboard layout
-- [ ] Professional info form (especialidad, registro profesional)
-- [ ] Biography section
+- [x] Doctor Dashboard layout
+- [x] Professional Profile page (`/doctor/profile`)
+- [x] Profile header (avatar, name, contact info)
+- [x] Professional stats (consultas atendidas)
+- [x] Especialidad card
+- [x] Work schedule display table
+- [x] Exception Schedule Manager (`/doctor/excepciones-horario`)
+- [x] My Appointments list
+- [x] Virtual appointment room integration
+- [x] Settings page
 
-### **Phase 5: Doctor Module - Schedule Management (PENDIENTE)**
+### **Phase 5: Admin Module - Core (COMPLETADO ✅)**
 
-- [ ] Work schedule configuration page
-- [ ] Day/hour selection interface
-- [ ] Exception requests system
-- [ ] Schedule validation (no overlapping)
+- [x] Admin Dashboard layout
+- [x] Admin Patients management (`/admin/pacientes`)
+- [x] Admin Doctors management (`/admin/medicos`)
+- [x] Admin Appointments management (`/admin/citas`)
+- [x] Admin Medications management (`/admin/medicamentos`)
+- [x] Admin Specialties management (`/admin/especialidades`)
+- [x] Admin Diseases management (`/admin/enfermedades`)
+- [x] Admin Configuration (`/admin/configuracion`)
 
-### **Phase 6: Doctor Module - Appointments (PENDIENTE)**
+### **Phase 6: Admin Module - Reports (PENDIENTE 🚧)**
 
-- [ ] "Mis Consultas" list page
-- [ ] Appointment detail view
-- [ ] Virtual appointment room
-- [ ] Medical notes input
-- [ ] Patient history access during consultation
+- [ ] Reports Dashboard (`/admin/reportes`)
+- [ ] Statistics cards (total, attended, cancelled)
+- [ ] Appointments by month chart
+- [ ] Appointments by doctor chart
+- [ ] Appointments by specialty chart
+- [ ] CSV Export functionality
+- [ ] Date range filter
 
-### **Phase 7: Appointment System Integration (PENDIENTE)**
+### **Phase 7: Admin Module - Audit (PENDIENTE 🚧)**
 
-- [ ] Patient appointment booking flow
-- [ ] Doctor appointment confirmation
-- [ ] Video call integration
-- [ ] Appointment notifications
+- [ ] Audit Log page (`/admin/auditoria`)
+- [ ] Activity log table
+- [ ] Filters (user, action, date range)
+- [ ] Show who did what and when
+- [ ] Login/logout tracking
+- [ ] Changes tracking (requires backend)
+
+### **Phase 8: Admin Module - Users (PENDIENTE 🚧)**
+
+- [ ] Users List page (`/admin/usuarios`)
+- [ ] List all users (patients, doctors, admins)
+- [ ] Activate/deactivate accounts
+- [ ] Reset passwords
+- [ ] View last access
+- [ ] Role management
 
 ---
 
@@ -442,7 +700,7 @@ src/app/
 
 ### **Unit Tests:**
 
-- Services (auth, api, medico, paciente)
+- Services (auth, api, medico, paciente, admin)
 - Component logic
 - Form validation
 - Pipe/utility functions
@@ -457,7 +715,7 @@ src/app/
 
 ### **E2E Tests (with Playwright):**
 
-- Complete user journeys (paciente y médico)
+- Complete user journeys (paciente, médico, admin)
 - Cross-browser compatibility
 - Mobile responsiveness
 - Accessibility testing
@@ -493,7 +751,7 @@ src/app/
 
 1. **Security:** All protected routes require valid JWT token + correct role
 2. **Role Detection:** El backend debe devolver el rol en el JWT o en la respuesta de login
-3. **Redirection:** Post-login, redirigir a `/paciente/dashboard` o `/medico/dashboard` según rol
+3. **Redirection:** Post-login, redirigir a `/paciente/dashboard`, `/doctor/dashboard` o `/admin/dashboard` según rol
 4. **Error Handling:** Backend returns structured error responses
 5. **File Upload:** Max 10MB, specific formats allowed
 6. **Token Management:** Store in localStorage, refresh strategy needed
@@ -501,9 +759,17 @@ src/app/
 8. **Accessibility:** WCAG 2.1 AA compliance
 9. **Performance:** Lazy loading for heavy components (@defer)
 10. **Doctor Profile:** El perfil profesional es lo que ven los pacientes al buscar médicos
+11. **Admin Features:** Reports, Audit and Users modules require backend endpoints
 
 ---
 
-**Last Updated:** 2026-01-31
+## 📅 **Version History**
+
+| Versión | Fecha | Cambios |
+|---------|-------|---------|
+| 1.0.0 | 2026-01-31 | Versión inicial con Auth, Patient y Doctor modules |
+| 2.0.0 | 2026-02-04 | Completado Admin Module Core, Agregados Reports/Audit/Users |
+
+**Last Updated:** 2026-02-04
 **Version:** 2.0.0
 **Maintainer:** Development Team

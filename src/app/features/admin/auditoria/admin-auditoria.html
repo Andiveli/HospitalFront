@@ -1,0 +1,304 @@
+<div class="p-6 lg:p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">
+          Registro de Auditoría
+        </h1>
+        <p class="text-slate-600 mt-1">
+          Historial de actividades y acciones en el sistema
+        </p>
+      </div>
+      <a
+        routerLink="/admin/dashboard"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 font-medium rounded-xl transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Volver
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="flex justify-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+    </div>
+  } @else if (error()) {
+    <!-- Error State -->
+    <div class="max-w-lg mx-auto text-center py-10">
+      <div class="bg-red-50 border-2 border-red-200 rounded-xl p-8">
+        <h3 class="text-xl font-bold text-red-800 mb-2">Error</h3>
+        <p class="text-red-700 mb-4">{{ error() }}</p>
+        <button
+          (click)="cargarLogs()"
+          class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- Filters -->
+    <div class="bg-white rounded-xl border border-slate-200 p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-slate-800 mb-4">Filtros</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+          <input
+            type="date"
+            [ngModel]="fechaInicio()"
+            (ngModelChange)="fechaInicio.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+          <input
+            type="date"
+            [ngModel]="fechaFin()"
+            (ngModelChange)="fechaFin.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Acción</label>
+          <select
+            [ngModel]="accion()"
+            (ngModelChange)="accion.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="TODOS">Todas las acciones</option>
+            @for (acc of acciones; track acc) {
+              <option [value]="acc">{{ acc }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Entidad</label>
+          <select
+            [ngModel]="entidad()"
+            (ngModelChange)="entidad.set($event)"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="TODOS">Todas las entidades</option>
+            @for (ent of entidades; track ent) {
+              <option [value]="ent">{{ ent }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Buscar</label>
+        <div class="relative">
+          <input
+            type="text"
+            [ngModel]="busqueda()"
+            (ngModelChange)="busqueda.set($event)"
+            placeholder="Buscar por usuario, email o detalles..."
+            class="w-full px-3 py-2 pl-10 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <svg
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        @if (tieneFiltrosActivos()) {
+          <button
+            (click)="limpiarFiltros()"
+            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors"
+          >
+            Limpiar
+          </button>
+        }
+        <button
+          (click)="aplicarFiltros()"
+          class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
+        >
+          Aplicar Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- Header Stats -->
+      <div class="grid grid-cols-4 divide-x divide-slate-200 bg-slate-50 border-b border-slate-200">
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-slate-900">{{ totalLogs() }}</p>
+          <p class="text-sm text-slate-500">Registros</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-emerald-600">
+            {{ totalAcciones() }}
+          </p>
+          <p class="text-sm text-slate-500">Acciones</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-orange-600">
+            {{ totalAuth() }}
+          </p>
+          <p class="text-sm text-slate-500">Auth</p>
+        </div>
+        <div class="p-4 text-center">
+          <p class="text-2xl font-bold text-blue-600">
+            {{ totalUsuariosUnicos() }}
+          </p>
+          <p class="text-sm text-slate-500">Usuarios</p>
+        </div>
+      </div>
+
+      @if (logs().length > 0) {
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-16">
+                  #
+                </th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-48">
+                  Usuario
+                </th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-32">
+                  Acción
+                </th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-32">
+                  Entidad
+                </th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700">
+                  Detalles
+                </th>
+                <th class="py-3 px-4 text-left font-semibold text-slate-700 w-48">
+                  Fecha/Hora
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              @for (log of logs(); track log.id; let i = $index) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="py-3 px-4 text-slate-500 text-sm">
+                    {{ logs().length - i }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                        <span class="text-sm font-medium text-orange-700">
+                          {{ log.usuarioNombre.charAt(0) }}
+                        </span>
+                      </div>
+                      <div>
+                        <p class="font-medium text-slate-900 text-sm">{{ log.usuarioNombre }}</p>
+                        <p class="text-xs text-slate-500">{{ log.usuarioEmail }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                      [class]="getAccionClass(log.accion)"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getAccionIcon(log.accion)" />
+                      </svg>
+                      {{ log.accion }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                      {{ log.entidad }}{{ log.entidadId ? ' #' + log.entidadId : '' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="group relative">
+                      <p class="text-sm text-slate-600 truncate max-w-xs">
+                        {{ log.detalles || '-' }}
+                      </p>
+                      @if (log.detalles && log.detalles.length > 60) {
+                        <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10">
+                          <div class="bg-slate-900 text-white text-xs rounded-lg p-3 max-w-md shadow-lg">
+                            {{ log.detalles }}
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div>
+                      <p class="text-sm text-slate-900 font-medium">
+                        {{ formatFechaRelativa(log.timestamp) }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        {{ formatFecha(log.timestamp) }}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <p class="text-sm text-slate-600">
+            Mostrando {{ totalLogs() }} registro(s) de actividad
+          </p>
+        </div>
+      } @else {
+        <!-- Empty State -->
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-700 mb-2">
+            No hay registros
+          </h3>
+          <p class="text-slate-500 mb-6 max-w-md mx-auto">
+            @if (tieneFiltrosActivos()) {
+              No se encontraron registros que coincidan con los filtros aplicados.
+            } @else {
+              No hay actividad registrada en el sistema aún.
+            }
+          </p>
+          @if (tieneFiltrosActivos()) {
+            <button
+              (click)="limpiarFiltros()"
+              class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
+            >
+              Limpiar Filtros
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Info Backend -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <h4 class="font-medium text-blue-900">Datos de Ejemplo</h4>
+          <p class="text-sm text-blue-700 mt-1">
+            Actualmente se muestran datos de ejemplo. Cuando el backend implemente los endpoints de auditoría,
+            estos se reemplazarán con registros reales de actividad del sistema.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

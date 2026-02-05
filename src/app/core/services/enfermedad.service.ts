@@ -13,6 +13,22 @@ import type {
   TiposEnfermedadResponseDto,
 } from '../models';
 
+// DTOs para Admin
+export interface CreateEnfermedadDto {
+  nombre: string;
+  descripcion?: string;
+}
+
+export interface UpdateEnfermedadDto {
+  nombre?: string;
+  descripcion?: string;
+}
+
+export interface EnfermedadResponseDto {
+  message: string;
+  data: EnfermedadDto;
+}
+
 /**
  * Servicio para gestionar enfermedades y relaciones paciente-enfermedad
  *
@@ -42,6 +58,57 @@ export class EnfermedadService {
       this.http.get<EnfermedadesListResponseDto>(`${this.baseUrl}/enfermedades/listEnfermedades`)
     );
     return response.data;
+  }
+
+  /**
+   * Obtiene una enfermedad por su ID
+   * GET /enfermedades/enfermedad/{id}
+   */
+  async getEnfermedadById(id: number): Promise<EnfermedadDto | null> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<EnfermedadResponseDto>(`${this.baseUrl}/enfermedades/enfermedad/${id}`)
+      );
+      return response.data || null;
+    } catch (error) {
+      console.error('Error fetching enfermedad:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Crea una nueva enfermedad en el catálogo
+   * POST /enfermedades/addEnfermedad
+   */
+  async createEnfermedad(data: CreateEnfermedadDto): Promise<EnfermedadDto | null> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<EnfermedadResponseDto>(`${this.baseUrl}/enfermedades/addEnfermedad`, data)
+      );
+      return response.data || null;
+    } catch (error) {
+      console.error('Error creating enfermedad:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza una enfermedad existente
+   * PATCH /enfermedades/enfermedad/{id}
+   */
+  async updateEnfermedad(id: number, data: UpdateEnfermedadDto): Promise<EnfermedadDto | null> {
+    try {
+      const response = await firstValueFrom(
+        this.http.patch<EnfermedadResponseDto>(
+          `${this.baseUrl}/enfermedades/enfermedad/${id}`,
+          data
+        )
+      );
+      return response.data || null;
+    } catch (error) {
+      console.error('Error updating enfermedad:', error);
+      throw error;
+    }
   }
 
   // ==========================================
@@ -112,5 +179,17 @@ export class EnfermedadService {
     await firstValueFrom(
       this.http.delete(`${this.baseUrl}/paciente-enfermedad/${pacienteId}/${enfermedadId}`)
     );
+  }
+
+  /**
+   * Obtiene las iniciales del nombre de la enfermedad
+   */
+  getInitials(nombre: string): string {
+    return nombre
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   }
 }

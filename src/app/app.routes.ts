@@ -107,6 +107,11 @@ export const routes: Routes = [
         title: 'Médicos - Panel Admin',
       },
       {
+        path: 'medicos/asignar',
+        loadComponent: () => import('./features/admin/asignar-medico/asignar-medico.component'),
+        title: 'Asignar Médico - Panel Admin',
+      },
+      {
         path: 'pacientes',
         loadComponent: () =>
           import('./features/admin/pacientes/admin-pacientes.component').then(
@@ -121,12 +126,65 @@ export const routes: Routes = [
         title: 'Citas - Panel Admin',
       },
       {
+        path: 'medicos/asignar',
+        loadComponent: () => import('./features/admin/asignar-medico/asignar-medico.component'),
+        title: 'Asignar Médico - Panel Admin',
+      },
+      {
         path: 'medicamentos',
         loadComponent: () =>
           import('./features/admin/medicamentos/admin-medicamentos.component').then(
             (m) => m.AdminMedicamentosComponent
           ),
         title: 'Medicamentos - Panel Admin',
+      },
+      {
+        path: 'especialidades',
+        loadComponent: () =>
+          import('./features/admin/especialidades/admin-especialidades.component').then(
+            (m) => m.AdminEspecialidadesComponent
+          ),
+        title: 'Especialidades - Panel Admin',
+      },
+      {
+        path: 'enfermedades',
+        loadComponent: () =>
+          import('./features/admin/enfermedades/admin-enfermedades.component').then(
+            (m) => m.AdminEnfermedadesComponent
+          ),
+        title: 'Enfermedades - Panel Admin',
+      },
+      {
+        path: 'configuracion',
+        loadComponent: () =>
+          import('./features/admin/configuracion/admin-configuracion.component').then(
+            (m) => m.AdminConfiguracionComponent
+          ),
+        title: 'Configuración - Panel Admin',
+      },
+      {
+        path: 'reportes',
+        loadComponent: () =>
+          import('./features/admin/reportes/admin-reportes.component').then(
+            (m) => m.AdminReportesComponent
+          ),
+        title: 'Reportes - Panel Admin',
+      },
+      {
+        path: 'auditoria',
+        loadComponent: () =>
+          import('./features/admin/auditoria/admin-auditoria.component').then(
+            (m) => m.AdminAuditoriaComponent
+          ),
+        title: 'Auditoría - Panel Admin',
+      },
+      {
+        path: 'estilos-vida',
+        loadComponent: () =>
+          import('./features/admin/estilos-vida/admin-estilos-vida.component').then(
+            (m) => m.AdminEstilosVidaComponent
+          ),
+        title: 'Estilos de Vida - Panel Admin',
       },
       {
         path: 'otros',
@@ -258,6 +316,14 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, patientGuard],
     children: [
+      {
+        path: 'completar-perfil',
+        loadComponent: () =>
+          import('./features/pacientes/completar-perfil/completar-perfil.component').then(
+            (m) => m.CompletarPerfilComponent
+          ),
+        title: 'Completar Perfil - Hospital App',
+      },
       {
         path: 'dashboard',
         loadComponent: () =>

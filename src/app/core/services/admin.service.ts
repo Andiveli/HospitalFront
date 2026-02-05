@@ -42,6 +42,63 @@ export interface DashboardStats {
   excepcionesPendientes: number;
 }
 
+// People Stats
+export interface PeopleStatsDto {
+  totalMedicos: number;
+  totalPacientes: number;
+}
+
+export interface PeopleStatsResponseDto {
+  message: string;
+  data: PeopleStatsDto;
+}
+
+// Citas DTOs
+export interface MedicoInfoDto {
+  id: number;
+  nombre: string;
+  apellido: string;
+  especialidad: string;
+}
+
+export interface PacienteInfoDto {
+  id: number;
+  nombre: string;
+  apellido: string;
+}
+
+export interface CitaResponseDto {
+  id: number;
+  fechaHoraCreacion: string;
+  fechaHoraInicio: string;
+  fechaHoraFin: string;
+  telefonica: boolean;
+  estado: string;
+  medico: MedicoInfoDto;
+  paciente: PacienteInfoDto;
+}
+
+export interface PaginationMetaDto {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface CitasPaginadasApiResponseDto {
+  message: string;
+  data: CitaResponseDto[];
+  meta: PaginationMetaDto;
+}
+
+const CITA_ESTADO = {
+  PENDIENTE: 'pendiente',
+  ATENDIDA: 'atendida',
+  CANCELADA: 'cancelada',
+} as const;
+
+export type CitaEstado = (typeof CITA_ESTADO)[keyof typeof CITA_ESTADO];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -87,20 +144,76 @@ export class AdminService {
 
   /**
    * Obtiene estadísticas del dashboard
-   * TODO: Implementar endpoint real en backend
-   * Por ahora retorna datos de ejemplo
+   * Combina datos de /people/stats y /citas/admin/citas
    */
   async getDashboardStats(): Promise<DashboardStats> {
-    // TODO: Cuando el backend tenga endpoint de estadísticas, usarlo
-    // Por ahora simulamos con datos
-    return {
-      citasAtendidas: 0,
-      citasPendientes: 0,
-      citasCanceladas: 0,
-      totalMedicos: 0,
-      totalPacientes: 0,
-      excepcionesPendientes: 0,
-    };
+    try {
+      const [peopleStats, citasData] = await Promise.all([
+        this.getPeopleStats(),
+        this.getAllCitasAdmin(),
+      ]);
+
+      // Contar citas por estado
+      const citasAtendidas = citasData.filter((c) => c.estado === 'atendida').length;
+      const citasPendientes = citasData.filter((c) => c.estado === 'pendiente').length;
+      const citasCanceladas = citasData.filter((c) => c.estado === 'cancelada').length;
+
+      return {
+        citasAtendidas,
+        citasPendientes,
+        citasCanceladas,
+        totalMedicos: peopleStats.totalMedicos,
+        totalPacientes: peopleStats.totalPacientes,
+        excepcionesPendientes: 0, // Se actualiza desde getAllExcepciones
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      return {
+        citasAtendidas: 0,
+        citasPendientes: 0,
+        citasCanceladas: 0,
+        totalMedicos: 0,
+        totalPacientes: 0,
+        excepcionesPendientes: 0,
+      };
+    }
+  }
+
+  /**
+   * Obtiene estadísticas de personas
+   * GET /people/stats
+   */
+  async getPeopleStats(): Promise<PeopleStatsDto> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<PeopleStatsResponseDto>(`${this.baseUrl}/people/stats`)
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching people stats:', error);
+      return {
+        totalMedicos: 0,
+        totalPacientes: 0,
+      };
+    }
+  }
+
+  /**
+   * Obtiene todas las citas del sistema (admin)
+   * GET /citas/admin/citas
+   */
+  async getAllCitasAdmin(page = 1, limit = 100): Promise<CitaResponseDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<CitasPaginadasApiResponseDto>(
+          `${this.baseUrl}/citas/admin/citas?page=${page}&limit=${limit}`
+        )
+      );
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching admin citas:', error);
+      return [];
+    }
   }
 
   /**

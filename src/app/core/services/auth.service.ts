@@ -232,9 +232,24 @@ export class AuthService {
     } else if (this.isDoctor()) {
       await this.router.navigate(['/doctor/dashboard']);
     } else if (this.isPatient()) {
-      await this.router.navigate(['/dashboard']);
+      // Verificar si el perfil está incompleto
+      const user = this.userSignal();
+      if (user && (!user.telefono || !user.genero)) {
+        await this.router.navigate(['/completar-perfil']);
+      } else {
+        await this.router.navigate(['/dashboard']);
+      }
     } else {
       await this.router.navigate(['/auth/login']);
     }
+  }
+
+  /**
+   * Verifica si el paciente tiene el perfil incompleto
+   */
+  perfilIncompleto(): boolean {
+    const user = this.userSignal();
+    if (!user || !this.isPatient()) return false;
+    return !user.telefono || !user.genero;
   }
 }

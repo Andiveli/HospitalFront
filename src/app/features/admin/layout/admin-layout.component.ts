@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -13,6 +13,7 @@ export class AdminLayoutComponent {
   private readonly authService = inject(AuthService);
 
   readonly user = this.authService.user;
+  readonly isSidebarOpen = signal(false);
 
   readonly menuItems = [
     { icon: 'grid', label: 'Dashboard', route: '/admin/dashboard' },
@@ -22,6 +23,14 @@ export class AdminLayoutComponent {
     { icon: 'pill', label: 'Medicamentos', route: '/admin/medicamentos' },
     { icon: 'dots', label: 'Otros', route: '/admin/otros' },
   ];
+
+  toggleSidebar(): void {
+    this.isSidebarOpen.update((value) => !value);
+  }
+
+  closeSidebar(): void {
+    this.isSidebarOpen.set(false);
+  }
 
   async logout(): Promise<void> {
     await this.authService.logout();

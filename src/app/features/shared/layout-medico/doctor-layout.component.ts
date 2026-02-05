@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -14,6 +14,7 @@ export class DoctorLayoutComponent {
   private readonly router = inject(Router);
 
   readonly user = this.authService.user;
+  readonly isSidebarOpen = signal(false);
 
   readonly menuItems = [
     { icon: 'grid', label: 'Inicio', route: '/doctor/dashboard' },
@@ -21,4 +22,16 @@ export class DoctorLayoutComponent {
     { icon: 'user', label: 'Perfil Profesional', route: '/doctor/profile' },
     { icon: 'settings', label: 'Ajustes', route: '/doctor/ajustes' },
   ];
+
+  toggleSidebar(): void {
+    this.isSidebarOpen.update((value) => !value);
+  }
+
+  closeSidebar(): void {
+    this.isSidebarOpen.set(false);
+  }
+
+  async logout(): Promise<void> {
+    await this.authService.logout();
+  }
 }

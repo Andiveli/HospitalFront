@@ -2,8 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
-  type OnInit,
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -21,7 +21,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './admin-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent {
   private readonly adminService = inject(AdminService);
   private readonly authService = inject(AuthService);
 
@@ -55,8 +55,12 @@ export class AdminDashboardComponent implements OnInit {
     return this.excepcionesFuturas().reduce((acc, m) => acc + m.excepciones.length, 0);
   });
 
-  async ngOnInit(): Promise<void> {
-    await this.loadDashboardData();
+  // Effect: cargar datos al inicializar
+  constructor() {
+    effect(() => {
+      // Solo corre una vez al inicializar
+      void this.loadDashboardData();
+    });
   }
 
   async loadDashboardData(): Promise<void> {

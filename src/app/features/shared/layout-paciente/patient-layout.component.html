@@ -1,6 +1,34 @@
 <div class="flex min-h-screen bg-slate-50">
+  <!-- Mobile Menu Button -->
+  <button
+    (click)="toggleSidebar()"
+    class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition"
+    aria-label="Toggle menu"
+  >
+    @if (!isSidebarOpen()) {
+      <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    } @else {
+      <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    }
+  </button>
+
+  <!-- Overlay for mobile -->
+  @if (isSidebarOpen()) {
+    <div
+      (click)="closeSidebar()"
+      class="lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+    ></div>
+  }
+
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
+  <aside
+    [class.translate-x-0]="isSidebarOpen()"
+    class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
+  >
     <!-- Logo -->
     <div class="p-6 border-b border-slate-200">
       <div class="flex items-center gap-3">
@@ -31,6 +59,7 @@
           <li>
             <a
               [routerLink]="item.route"
+              (click)="closeSidebar()"
               routerLinkActive="bg-slate-100 text-blue-600 font-medium"
               [routerLinkActiveOptions]="{ exact: true }"
               class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 transition"
@@ -108,7 +137,22 @@
           </li>
         }
       </ul>
-    </nav>
+      </nav>
+
+    <!-- Botón de completar perfil (solo si falta información) -->
+    @if (perfilIncompleto()) {
+      <div class="px-4 pb-4">
+        <a
+          routerLink="/completar-perfil"
+          class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-xl"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Agregar Información
+        </a>
+      </div>
+    }
 
     <!-- Footer -->
     <div class="p-4 border-t border-slate-200">
@@ -119,7 +163,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-auto">
+  <main class="flex-1 overflow-auto pt-16 lg:pt-0">
     <router-outlet />
   </main>
 </div>
