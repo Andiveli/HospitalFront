@@ -55,11 +55,13 @@ export interface CreateMedicoResponseDto {
 export interface UsuarioSimpleDto {
   id: number;
   cedula: string;
-  nombres: string;
-  apellidos: string;
+  primerNombre?: string;
+  segundoNombre?: string;
+  primerApellido?: string;
+  segundoApellido?: string;
   email: string;
-  genero: string;
   verificado: boolean;
+  imageUrl?: string;
 }
 
 export interface MedicoResponseDto {
@@ -292,15 +294,14 @@ export class MedicosService {
   /**
    * Obtiene lista de pacientes
    * GET /people/pacientes
+   * Nota: La respuesta es un array directo
    */
   async getPacientes(): Promise<UsuarioSimpleDto[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ message: string; data: UsuarioSimpleDto[] }>(
-          `${this.peopleBaseUrl}/pacientes`
-        )
+        this.http.get<UsuarioSimpleDto[]>(`${this.peopleBaseUrl}/pacientes`)
       );
-      return response.data || [];
+      return response || [];
     } catch (error) {
       console.error('Error fetching pacientes:', error);
       return [];

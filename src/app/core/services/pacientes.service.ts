@@ -25,17 +25,19 @@ export interface RolInfoDto {
 export interface PacienteDto {
   id: number;
   cedula: string;
-  primerNombre: string;
+  primerNombre?: string;
   segundoNombre?: string;
-  primerApellido: string;
+  primerApellido?: string;
   segundoApellido?: string;
+  nombres?: string;
+  apellido?: string;
   email: string;
   verificado: boolean;
   fechaCreacion: string;
   imageUrl?: string;
-  genero: GeneroInfoDto;
-  estado: EstadoInfoDto;
-  roles: RolInfoDto[];
+  genero?: GeneroInfoDto;
+  estado?: EstadoInfoDto;
+  roles?: RolInfoDto[];
 }
 
 @Injectable({
@@ -43,23 +45,25 @@ export interface PacienteDto {
 })
 export class PacientesService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/people`;
+  private readonly baseUrl = `${environment.apiUrl}`;
 
   /**
    * Obtiene la lista de todos los pacientes registrados
    * GET /people/pacientes
+   * Nota: La respuesta es un array directo, no tiene wrapper { message, data }
    */
   async getAllPacientes(): Promise<PacienteDto[]> {
     try {
-      const response = await firstValueFrom(
-        this.http.get<{
-          message: string;
-          data: PacienteDto[];
-        }>(`${this.baseUrl}/pacientes`)
-      );
-      return response.data || [];
+      const url = `${this.baseUrl}/people/pacientes`;
+      console.log('[PacientesService] Haciendo GET a:', url);
+
+      const response = await firstValueFrom(this.http.get<PacienteDto[]>(url));
+
+      console.log('[PacientesService] Respuesta completa:', response);
+
+      return response || [];
     } catch (error) {
-      console.error('Error fetching pacientes:', error);
+      console.error('[PacientesService] Error:', error);
       return [];
     }
   }
@@ -97,8 +101,10 @@ export class PacientesService {
    * Verifica si el paciente tiene rol de médico
    */
   isMedico(paciente: PacienteDto): boolean {
-    return paciente.roles.some(
-      (rol) => rol.nombre.toUpperCase() === 'MEDICO' || rol.nombre.toUpperCase() === 'MÉDICO'
+    return (
+      paciente.roles?.some(
+        (rol) => rol.nombre.toUpperCase() === 'MEDICO' || rol.nombre.toUpperCase() === 'MÉDICO'
+      ) || false
     );
   }
 

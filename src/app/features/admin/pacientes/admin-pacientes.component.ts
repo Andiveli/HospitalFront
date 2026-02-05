@@ -213,7 +213,7 @@ import { type PacienteDto, PacientesService } from '../../../core/services/pacie
                     </td>
                     <td class="px-6 py-4">
                       <p class="text-sm text-slate-900">{{ paciente.email }}</p>
-                      <p class="text-sm text-slate-500">{{ paciente.genero.nombre }}</p>
+                      <p class="text-sm text-slate-500">{{ paciente.genero?.nombre || 'No especificado' }}</p>
                     </td>
                     <td class="px-6 py-4">
                       @if (paciente.verificado) {

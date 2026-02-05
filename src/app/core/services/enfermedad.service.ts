@@ -5,12 +5,9 @@ import { environment } from '../../../environments/environment';
 import type {
   CreatePacienteEnfermedadDto,
   EnfermedadDto,
-  EnfermedadesListResponseDto,
   PacienteEnfermedadDto,
-  PacienteEnfermedadesListResponseDto,
   PacienteEnfermedadResponseDto,
   TipoEnfermedadDto,
-  TiposEnfermedadResponseDto,
 } from '../models';
 
 // DTOs para Admin
@@ -52,12 +49,19 @@ export class EnfermedadService {
   /**
    * Obtiene el listado completo de enfermedades del catálogo médico
    * Accesible para todos los usuarios autenticados
+   * GET /enfermedades/listEnfermedades
+   * Nota: La respuesta es un array directo
    */
   async getEnfermedades(): Promise<EnfermedadDto[]> {
-    const response = await firstValueFrom(
-      this.http.get<EnfermedadesListResponseDto>(`${this.baseUrl}/enfermedades/listEnfermedades`)
-    );
-    return response.data;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<EnfermedadDto[]>(`${this.baseUrl}/enfermedades/listEnfermedades`)
+      );
+      return response || [];
+    } catch (error) {
+      console.error('Error fetching enfermedades:', error);
+      return [];
+    }
   }
 
   /**
@@ -118,12 +122,19 @@ export class EnfermedadService {
   /**
    * Obtiene los tipos de enfermedad disponibles
    * (antecedente, alergia, hereditaria, etc.)
+   * GET /tipo-enfermedad/tipos
+   * Nota: La respuesta es un array directo
    */
   async getTiposEnfermedad(): Promise<TipoEnfermedadDto[]> {
-    const response = await firstValueFrom(
-      this.http.get<TiposEnfermedadResponseDto>(`${this.baseUrl}/tipo-enfermedad/tipos`)
-    );
-    return response.data;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<TipoEnfermedadDto[]>(`${this.baseUrl}/tipo-enfermedad/tipos`)
+      );
+      return response || [];
+    } catch (error) {
+      console.error('Error fetching tipos enfermedad:', error);
+      return [];
+    }
   }
 
   // ==========================================
@@ -157,16 +168,21 @@ export class EnfermedadService {
 
   /**
    * Obtiene las enfermedades registradas de un paciente específico
-   *
-   * @param pacienteId ID del paciente
+   * GET /paciente-enfermedad/paciente/:pacienteId
+   * Nota: La respuesta es un array directo
    */
   async getEnfermedadesPaciente(pacienteId: number): Promise<PacienteEnfermedadDto[]> {
-    const response = await firstValueFrom(
-      this.http.get<PacienteEnfermedadesListResponseDto>(
-        `${this.baseUrl}/paciente-enfermedad/paciente/${pacienteId}`
-      )
-    );
-    return response.data;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<PacienteEnfermedadDto[]>(
+          `${this.baseUrl}/paciente-enfermedad/paciente/${pacienteId}`
+        )
+      );
+      return response || [];
+    } catch (error) {
+      console.error('Error fetching enfermedades del paciente:', error);
+      return [];
+    }
   }
 
   /**

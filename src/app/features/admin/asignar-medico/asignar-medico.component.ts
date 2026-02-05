@@ -66,7 +66,11 @@ export default class AsignarMedicoComponent {
 
     return this.pacientes()
       .filter((p) => {
-        const nombreCompleto = `${p.nombres} ${p.apellidos}`.toLowerCase();
+        const nombreCompleto =
+          `${p.primerNombre || ''} ${p.segundoNombre || ''} ${p.primerApellido || ''} ${p.segundoApellido || ''}`
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
         const cedula = p.cedula.toLowerCase();
         const email = p.email.toLowerCase();
         return nombreCompleto.includes(term) || cedula.includes(term) || email.includes(term);
@@ -139,7 +143,9 @@ export default class AsignarMedicoComponent {
 
   selectPaciente(paciente: UsuarioSimpleDto): void {
     this.usuarioId.set(paciente.id);
-    this.pacienteSearchTerm.set(`${paciente.nombres} ${paciente.apellidos}`);
+    this.pacienteSearchTerm.set(
+      `${paciente.primerNombre || ''} ${paciente.primerApellido || ''}`.trim()
+    );
   }
 
   clearPaciente(): void {

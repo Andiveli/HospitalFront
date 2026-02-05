@@ -81,7 +81,7 @@
                       (click)="selectPaciente(paciente)"
                       class="w-full text-left px-4 py-3 hover:bg-purple-50 transition border-b border-slate-100 last:border-b-0"
                     >
-                      <p class="font-medium text-slate-900">{{ paciente.nombres }} {{ paciente.apellidos }}</p>
+                      <p class="font-medium text-slate-900">{{ paciente.primerNombre }} {{ paciente.primerApellido }}</p>
                       <p class="text-sm text-slate-600">{{ paciente.cedula }} • {{ paciente.email }}</p>
                     </button>
                   }
@@ -107,10 +107,9 @@
                   </button>
                 </div>
                 <div class="text-sm text-purple-700 space-y-1">
-                  <p><strong>Nombre:</strong> {{ pacienteSeleccionado()?.nombres }} {{ pacienteSeleccionado()?.apellidos }}</p>
+                  <p><strong>Nombre:</strong> {{ pacienteSeleccionado()?.primerNombre }} {{ pacienteSeleccionado()?.primerApellido }}</p>
                   <p><strong>Cédula:</strong> {{ pacienteSeleccionado()?.cedula }}</p>
                   <p><strong>Email:</strong> {{ pacienteSeleccionado()?.email }}</p>
-                  <p><strong>Género:</strong> {{ pacienteSeleccionado()?.genero }}</p>
                 </div>
               </div>
             }

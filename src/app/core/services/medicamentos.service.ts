@@ -34,28 +34,18 @@ export interface UpdateMedicamentoDto {
   presentacionId?: number;
 }
 
-export interface MedicamentosListResponseDto {
-  message: string;
-  data: MedicamentoDto[];
-}
-
 export interface MedicamentoResponseDto {
   message: string;
   data: MedicamentoDto;
 }
 
-export interface PresentacionesListResponseDto {
+export interface PresentacionResponseDto {
   message: string;
-  data: PresentacionDto[];
+  data: PresentacionDto;
 }
 
 export interface CreatePresentacionDto {
   nombre: string;
-}
-
-export interface PresentacionResponseDto {
-  message: string;
-  data: PresentacionDto;
 }
 
 @Injectable({
@@ -68,13 +58,12 @@ export class MedicamentosService {
   /**
    * Obtiene la lista completa de medicamentos
    * GET /medicamentos
+   * Nota: La respuesta es un array directo
    */
   async getAllMedicamentos(): Promise<MedicamentoDto[]> {
     try {
-      const response = await firstValueFrom(
-        this.http.get<MedicamentosListResponseDto>(this.baseUrl)
-      );
-      return response.data || [];
+      const response = await firstValueFrom(this.http.get<MedicamentoDto[]>(this.baseUrl));
+      return response || [];
     } catch (error) {
       console.error('Error fetching medicamentos:', error);
       return [];
@@ -146,13 +135,14 @@ export class MedicamentosService {
   /**
    * Obtiene todas las presentaciones disponibles
    * GET /medicamentos/presentaciones
+   * Nota: La respuesta es un array directo
    */
   async getAllPresentaciones(): Promise<PresentacionDto[]> {
     try {
       const response = await firstValueFrom(
-        this.http.get<PresentacionesListResponseDto>(`${this.baseUrl}/presentaciones`)
+        this.http.get<PresentacionDto[]>(`${this.baseUrl}/presentaciones`)
       );
-      return response.data || [];
+      return response || [];
     } catch (error) {
       console.error('Error fetching presentaciones:', error);
       return [];
